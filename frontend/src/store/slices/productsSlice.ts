@@ -1,232 +1,164 @@
-import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
+import { AxiosError } from "axios";
+import {
+  Sweet as ApiSweet,
+  CreateSweetInput,
+  UpdateSweetInput,
+  sweetsApi,
+  GetSweetsParams,
+  PaginatedResponse,
+} from "../../api/sweets";
 
-// Updated to match API schema
-export interface Sweet {
-  id: number;
-  name: string;
-  category: string;
-  price: number;
-  quantity: number;
-  imageUrl: string | null;
-}
-
-// Extended interface for UI features
-export interface Product extends Sweet {
-  description?: string;
-  weight?: string;
-  ingredients?: string[];
-  nutritionInfo?: {
-    calories: number;
-    protein: number;
-    carbs: number;
-    fat: number;
-    sugar: number;
-  };
-  inStock?: boolean;
-  featured?: boolean;
-  occasions?: string[];
-  sugarFree?: boolean;
-}
+export type Product = ApiSweet & { imageUrl: string; stock: number };
 
 interface ProductsState {
   items: Product[];
-  filteredItems: Product[];
-  categories: string[];
   isLoading: boolean;
-  error: string | null;
-  searchQuery: string;
-  selectedCategory: string;
-  priceRange: [number, number];
-  sortBy: 'name' | 'price' | 'popular' | 'newest';
-}
-
-// Admin management state
-interface AdminState {
   isCreating: boolean;
   isUpdating: boolean;
   isDeleting: boolean;
+  error: string | null;
+  searchQuery: string;
+  selectedCategory: string;
+  sortBy: string;
+  meta: PaginatedResponse<ApiSweet>["meta"] | null;
 }
 
-const initialState: ProductsState & AdminState = {
+const initialState: ProductsState = {
   items: [],
-  filteredItems: [],
-  categories: ['Traditional Sweets', 'Sugar-Free', 'Dry Fruits', 'Cakes', 'Seasonal Specials'],
   isLoading: false,
-  error: null,
-  searchQuery: '',
-  selectedCategory: '',
-  priceRange: [0, 2000],
-  sortBy: 'popular',
-  // Admin states
   isCreating: false,
   isUpdating: false,
   isDeleting: false,
+  error: null,
+  searchQuery: "",
+  selectedCategory: "All",
+  sortBy: "createdAt:desc",
+  meta: null,
 };
 
-// Mock products data matching API schema
-const mockProducts: Product[] = [
-  {
-    id: 1,
-    name: 'Kaju Katli',
-    category: 'Traditional Sweets',
-    price: 800,
-    quantity: 50,
-    imageUrl: '/placeholder.svg',
-    description: 'Premium cashew fudge made with pure ghee and silver leaf',
-    weight: '500g',
-    ingredients: ['Cashews', 'Sugar', 'Ghee', 'Silver Leaf'],
-    nutritionInfo: { calories: 450, protein: 8, carbs: 35, fat: 28, sugar: 30 },
-    inStock: true,
-    featured: true,
-    occasions: ['Diwali', 'Wedding', 'Birthday'],
-    sugarFree: false,
-  },
-  {
-    id: 2,
-    name: 'Gulab Jamun',
-    category: 'Traditional Sweets',
-    price: 400,
-    quantity: 75,
-    imageUrl: '/placeholder.svg',
-    description: 'Soft, spongy balls soaked in aromatic sugar syrup',
-    weight: '1kg',
-    ingredients: ['Milk Powder', 'Sugar', 'Cardamom', 'Rose Water'],
-    nutritionInfo: { calories: 350, protein: 4, carbs: 45, fat: 18, sugar: 40 },
-    inStock: true,
-    featured: true,
-    occasions: ['Festival', 'Celebration'],
-    sugarFree: false,
-  },
-  {
-    id: 3,
-    name: 'Sugar-Free Laddu',
-    category: 'Sugar-Free',
-    price: 600,
-    quantity: 30,
-    imageUrl: '/placeholder.svg',
-    description: 'Healthy besan laddu sweetened with dates and jaggery',
-    weight: '500g',
-    ingredients: ['Besan', 'Dates', 'Jaggery', 'Ghee', 'Nuts'],
-    nutritionInfo: { calories: 280, protein: 6, carbs: 25, fat: 15, sugar: 12 },
-    inStock: true,
-    featured: false,
-    occasions: ['Health Conscious', 'Diabetic Friendly'],
-    sugarFree: true,
-  },
-];
-
-// API thunks matching swagger endpoints
 export const fetchProducts = createAsyncThunk(
-  'products/fetchProducts',
-  async (category?: string) => {
-    // Mock API call to GET /api/sweets
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    let products = [...mockProducts];
-    if (category) {
-      products = products.filter(p => p.category === category);
+  "products/fetchProducts",
+  async (params: GetSweetsParams, { rejectWithValue }) => {
+    try {
+      const response = await sweetsApi.getAllSweets(params);
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error instanceof AxiosError
+          ? error.response?.data?.message || "Failed to fetch products"
+          : "An unexpected error occurred"
+      );
     }
-    return products;
   }
 );
 
 export const createSweet = createAsyncThunk(
-  'products/createSweet',
-  async (sweetData: Omit<Sweet, 'id'>) => {
-    // Mock API call to POST /api/sweets
-    await new Promise(resolve => setTimeout(resolve, 800));
-    const newSweet: Sweet = {
-      ...sweetData,
-      id: Date.now(), // Mock ID generation
-    };
-    return newSweet;
+  "products/createSweet",
+  async (sweetData: CreateSweetInput, { rejectWithValue }) => {
+    try {
+      const response = await sweetsApi.createSweet(sweetData);
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error instanceof AxiosError
+          ? error.response?.data?.message || "Failed to create sweet"
+          : "An unexpected error occurred"
+      );
+    }
   }
 );
 
 export const updateSweet = createAsyncThunk(
-  'products/updateSweet',
-  async ({ id, ...sweetData }: Sweet) => {
-    // Mock API call to PUT /api/sweets/{id}
-    await new Promise(resolve => setTimeout(resolve, 800));
-    return { id, ...sweetData };
+  "products/updateSweet",
+  async (sweetData: UpdateSweetInput, { rejectWithValue }) => {
+    try {
+      const response = await sweetsApi.updateSweet(sweetData);
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error instanceof AxiosError
+          ? error.response?.data?.message || "Failed to update sweet"
+          : "An unexpected error occurred"
+      );
+    }
   }
 );
 
 export const deleteSweet = createAsyncThunk(
-  'products/deleteSweet',
-  async (id: number) => {
-    // Mock API call to DELETE /api/sweets/{id}
-    await new Promise(resolve => setTimeout(resolve, 500));
-    return id;
+  "products/deleteSweet",
+  async (id: number | string, { rejectWithValue }) => {
+    try {
+      // sweetsApi expects string id
+      await sweetsApi.deleteSweet(String(id));
+      return id;
+    } catch (error) {
+      return rejectWithValue(
+        error instanceof AxiosError
+          ? error.response?.data?.message || "Failed to delete sweet"
+          : "An unexpected error occurred"
+      );
+    }
+  }
+);
+
+export const purchaseSweet = createAsyncThunk(
+  "products/purchaseSweet",
+  async (
+    { id, quantity }: { id: number | string; quantity?: number },
+    { rejectWithValue }
+  ) => {
+    try {
+      const response = await sweetsApi.purchaseSweet(id, quantity || 1);
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error instanceof AxiosError
+          ? error.response?.data?.message || "Failed to purchase sweet"
+          : "An unexpected error occurred"
+      );
+    }
+  }
+);
+
+export const restockSweet = createAsyncThunk(
+  "products/restockSweet",
+  async (
+    { id, quantity }: { id: number | string; quantity?: number },
+    { rejectWithValue }
+  ) => {
+    try {
+      const response = await sweetsApi.restockSweet(id, quantity || 1);
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(
+        error instanceof AxiosError
+          ? error.response?.data?.message || "Failed to restock sweet"
+          : "An unexpected error occurred"
+      );
+    }
   }
 );
 
 const productsSlice = createSlice({
-  name: 'products',
+  name: "products",
   initialState,
   reducers: {
     setSearchQuery: (state, action: PayloadAction<string>) => {
       state.searchQuery = action.payload;
-      productsSlice.caseReducers.filterProducts(state);
     },
-    
     setSelectedCategory: (state, action: PayloadAction<string>) => {
       state.selectedCategory = action.payload;
-      productsSlice.caseReducers.filterProducts(state);
     },
-    
-    setPriceRange: (state, action: PayloadAction<[number, number]>) => {
-      state.priceRange = action.payload;
-      productsSlice.caseReducers.filterProducts(state);
-    },
-    
-    setSortBy: (state, action: PayloadAction<'name' | 'price' | 'popular' | 'newest'>) => {
+    setSortBy: (state, action: PayloadAction<string>) => {
       state.sortBy = action.payload;
-      productsSlice.caseReducers.sortProducts(state);
     },
-    
-    filterProducts: (state) => {
-      let filtered = [...state.items];
-      
-      // Filter by search query
-      if (state.searchQuery) {
-        filtered = filtered.filter(product =>
-          product.name.toLowerCase().includes(state.searchQuery.toLowerCase()) ||
-          product.description.toLowerCase().includes(state.searchQuery.toLowerCase())
-        );
-      }
-      
-      // Filter by category
-      if (state.selectedCategory) {
-        filtered = filtered.filter(product => product.category === state.selectedCategory);
-      }
-      
-      // Filter by price range
-      filtered = filtered.filter(product =>
-        product.price >= state.priceRange[0] && product.price <= state.priceRange[1]
-      );
-      
-      state.filteredItems = filtered;
-      productsSlice.caseReducers.sortProducts(state);
-    },
-    
-    sortProducts: (state) => {
-      switch (state.sortBy) {
-        case 'name':
-          state.filteredItems.sort((a, b) => a.name.localeCompare(b.name));
-          break;
-        case 'price':
-          state.filteredItems.sort((a, b) => a.price - b.price);
-          break;
-        case 'popular':
-          state.filteredItems.sort((a, b) => Number(b.featured) - Number(a.featured));
-          break;
-        case 'newest':
-          state.filteredItems.sort((a, b) => b.id.localeCompare(a.id));
-          break;
-      }
+    clearFilters: (state) => {
+      state.searchQuery = "";
+      state.selectedCategory = "All";
+      state.sortBy = "createdAt:desc";
     },
   },
-  
   extraReducers: (builder) => {
     builder
       .addCase(fetchProducts.pending, (state) => {
@@ -235,70 +167,123 @@ const productsSlice = createSlice({
       })
       .addCase(fetchProducts.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.items = action.payload;
-        state.filteredItems = action.payload;
+        state.items = action.payload.items.map((sweet) => ({
+          ...sweet,
+          stock: typeof sweet.quantity === "number" ? sweet.quantity : 0,
+          imageUrl: sweet.image || "/placeholder.svg",
+        }));
+        state.meta = action.payload.meta;
       })
       .addCase(fetchProducts.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.error.message || 'Failed to fetch products';
+        state.error = action.payload as string;
       })
-      // Create Sweet
       .addCase(createSweet.pending, (state) => {
         state.isCreating = true;
         state.error = null;
       })
       .addCase(createSweet.fulfilled, (state, action) => {
         state.isCreating = false;
-        state.items.push(action.payload);
-        state.filteredItems.push(action.payload);
+        const newSweet = {
+          ...action.payload,
+          imageUrl: action.payload.image || "/placeholder.svg",
+          stock:
+            typeof action.payload.quantity === "number"
+              ? action.payload.quantity
+              : 0,
+        } as Product;
+        state.items.unshift(newSweet);
       })
       .addCase(createSweet.rejected, (state, action) => {
         state.isCreating = false;
-        state.error = action.error.message || 'Failed to create sweet';
+        state.error = action.payload as string;
       })
-      // Update Sweet
       .addCase(updateSweet.pending, (state) => {
         state.isUpdating = true;
         state.error = null;
       })
       .addCase(updateSweet.fulfilled, (state, action) => {
         state.isUpdating = false;
-        const index = state.items.findIndex(item => item.id === action.payload.id);
-        if (index !== -1) {
-          state.items[index] = action.payload;
-          const filteredIndex = state.filteredItems.findIndex(item => item.id === action.payload.id);
-          if (filteredIndex !== -1) {
-            state.filteredItems[filteredIndex] = action.payload;
-          }
-        }
+        const updatedSweet: Product = {
+          ...action.payload,
+          imageUrl: action.payload.image || "/placeholder.svg",
+          stock:
+            typeof action.payload.quantity === "number"
+              ? action.payload.quantity
+              : 0,
+        } as Product;
+        const index = state.items.findIndex(
+          (item) => item.id === updatedSweet.id
+        );
+        if (index !== -1) state.items[index] = updatedSweet;
       })
       .addCase(updateSweet.rejected, (state, action) => {
         state.isUpdating = false;
-        state.error = action.error.message || 'Failed to update sweet';
+        state.error = action.payload as string;
       })
-      // Delete Sweet
       .addCase(deleteSweet.pending, (state) => {
         state.isDeleting = true;
         state.error = null;
       })
       .addCase(deleteSweet.fulfilled, (state, action) => {
         state.isDeleting = false;
-        state.items = state.items.filter(item => item.id !== action.payload);
-        state.filteredItems = state.filteredItems.filter(item => item.id !== action.payload);
+        state.items = state.items.filter(
+          (item) => String(item.id) !== String(action.payload)
+        );
       })
       .addCase(deleteSweet.rejected, (state, action) => {
         state.isDeleting = false;
-        state.error = action.error.message || 'Failed to delete sweet';
+        state.error = action.payload as string;
+      });
+
+    builder
+      .addCase(purchaseSweet.pending, (state) => {
+        state.isUpdating = true;
+        state.error = null;
+      })
+      .addCase(purchaseSweet.fulfilled, (state, action) => {
+        state.isUpdating = false;
+        // API returns updated sweet with reduced quantity
+        const updated = action.payload;
+        const idx = state.items.findIndex(
+          (i) => String(i.id) === String(updated.id)
+        );
+        if (idx !== -1)
+          state.items[idx] = {
+            ...updated,
+            imageUrl: updated.image || "/placeholder.svg",
+            stock: typeof updated.quantity === "number" ? updated.quantity : 0,
+          } as Product;
+      })
+      .addCase(purchaseSweet.rejected, (state, action) => {
+        state.isUpdating = false;
+        state.error = action.payload as string;
+      })
+      .addCase(restockSweet.pending, (state) => {
+        state.isUpdating = true;
+        state.error = null;
+      })
+      .addCase(restockSweet.fulfilled, (state, action) => {
+        state.isUpdating = false;
+        const updated = action.payload;
+        const idx = state.items.findIndex(
+          (i) => String(i.id) === String(updated.id)
+        );
+        if (idx !== -1)
+          state.items[idx] = {
+            ...updated,
+            imageUrl: updated.image || "/placeholder.svg",
+            stock: typeof updated.quantity === "number" ? updated.quantity : 0,
+          } as Product;
+      })
+      .addCase(restockSweet.rejected, (state, action) => {
+        state.isUpdating = false;
+        state.error = action.payload as string;
       });
   },
 });
 
-export const {
-  setSearchQuery,
-  setSelectedCategory,
-  setPriceRange,
-  setSortBy,
-  filterProducts,
-} = productsSlice.actions;
+export const { setSearchQuery, setSelectedCategory, setSortBy, clearFilters } =
+  productsSlice.actions;
 
 export default productsSlice.reducer;

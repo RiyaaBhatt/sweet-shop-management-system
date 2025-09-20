@@ -1,14 +1,7 @@
-// src/controllers/sweet.controller.ts
 import { Request, Response, NextFunction } from "express";
 import { SweetService } from "../services/sweet.service";
-import prisma from "../config/prisma.client";
+import { Sweet } from "@prisma/client";
 
-/**
- * @swagger
- * tags:
- *   name: Sweets
- *   description: Sweet management endpoints
- */
 export class SweetController {
   private sweetService: SweetService;
 
@@ -16,63 +9,73 @@ export class SweetController {
     this.sweetService = new SweetService();
   }
 
-  /**
-   * @swagger
-   * /api/sweets:
-   *   post:
-   *     summary: Create a new sweet
-   *     tags: [Sweets]
-   *     security:
-   *       - BearerAuth: []
-   *     requestBody:
-   *       required: true
-   *       content:
-   *         multipart/form-data:
-   *           schema:
-   *             type: object
-   *             required:
-   *               - name
-   *               - category
-   *               - price
-   *               - quantity
-   *             properties:
-   *               name:
-   *                 type: string
-   *               category:
-   *                 type: string
-   *               price:
-   *                 type: number
-   *               quantity:
-   *                 type: integer
-   *               image:
-   *                 type: string
-   *                 format: binary
-   *     responses:
-   *       201:
-   *         description: Sweet created successfully
-   *         content:
-   *           application/json:
-   *             schema:
-   *               $ref: '#/components/schemas/Sweet'
-   *       400:
-   *         description: Invalid input
-   *       401:
-   *         description: Unauthorized
-   *       403:
-   *         description: Forbidden - Admin only
-   */
+  public getAllSweets = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = parseInt(req.query.limit as string) || 10;
+      const search = req.query.search as string;
+      const category = req.query.category as string;
+      const sortBy = req.query.sortBy as string;
+      const sortOrder = req.query.sortOrder as "asc" | "desc";
+
+      const result = await this.sweetService.getAllSweets({
+        page,
+        limit,
+        search,
+        category,
+        sortBy,
+        sortOrder,
+        query: "",
+      });
+
+      res.json(result);
+    } catch (error) {
+      next(error);
+    }
+  };
+
   public createSweet = async (
     req: Request,
     res: Response,
     next: NextFunction
   ): Promise<void> => {
     try {
-      const sweetData = {
-        ...req.body,
-        price: parseFloat(req.body.price),
-        quantity: parseInt(req.body.quantity),
-        imageUrl: req.file ? `/uploads/${req.file.filename}` : undefined,
+      const body = req.body ?? {};
+      const parsedPrice =
+        body.price !== undefined && body.price !== ""
+          ? parseFloat(String(body.price))
+          : undefined;
+      const rawQuantity =
+        body.quantity !== undefined
+          ? body.quantity
+          : body.stock !== undefined
+          ? body.stock
+          : undefined;
+      const parsedQuantity =
+        rawQuantity !== undefined && rawQuantity !== ""
+          ? parseInt(String(rawQuantity))
+          : undefined;
+
+      // Pick only allowed fields to avoid passing unexpected keys (like stock)
+      const sweetData: any = {
+        name: body.name,
+        description: body.description,
+        category: body.category,
+        price: parsedPrice,
+        quantity: parsedQuantity,
+        image: req.file ? req.file.filename : undefined,
+        isAvailable:
+          parsedQuantity !== undefined ? parsedQuantity > 0 : undefined,
       };
+      if (body.featured !== undefined)
+        sweetData.featured = body.featured === "true" || body.featured === true;
+      if (body.sugarFree !== undefined)
+        sweetData.sugarFree =
+          body.sugarFree === "true" || body.sugarFree === true;
       const sweet = await this.sweetService.createSweet(sweetData);
       res.status(201).json(sweet);
     } catch (error) {
@@ -80,154 +83,19 @@ export class SweetController {
     }
   };
 
-  /**
-   * @swagger
-   * /api/sweets:
-   *   get:
-   *     summary: Get all sweets with pagination
-   *     tags: [Sweets]
-   *     parameters:
-   *       - in: query
-   *         name: page
-   *         schema:
-   *           type: integer
-   *           default: 1
-   *         description: Page number
-   *       - in: query
-   *         name: limit
-   *         schema:
-   *           type: integer
-   *           default: 10
-   *         description: Number of items per page
-   *     responses:
-   *       200:
-   *         description: List of sweets
-   *         content:
-   *           application/json:
-   *             schema:
-   *               type: object
-   *               properties:
-   *                 items:
-   *                   type: array
-   *                   items:
-   *                     $ref: '#/components/schemas/Sweet'
-   *                 meta:
-   *                   type: object
-   *                   properties:
-   *                     page:
-   *                       type: integer
-   *                     limit:
-   *                       type: integer
-   *                     total:
-   *                       type: integer
-   *                     totalPages:
-   *                       type: integer
-   */
-  public getSweets = async (
+  public getSweetById = async (
     req: Request,
     res: Response,
     next: NextFunction
   ): Promise<void> => {
     try {
-      const { page = 1, limit = 10 } = req.query;
-      const sweets = await this.sweetService.getSweets({
-        page: Number(page),
-        limit: Number(limit),
-      });
-      res.status(200).json(sweets);
-    } catch (error) {
-      next(error);
-    }
-  };
-
-  /**
-   * @swagger
-   * /api/sweets/search:
-   *   get:
-   *     summary: Search sweets by name or category
-   *     tags: [Sweets]
-   *     parameters:
-   *       - in: query
-   *         name: query
-   *         required: true
-   *         schema:
-   *           type: string
-   *         description: Search query string
-   *       - in: query
-   *         name: page
-   *         schema:
-   *           type: integer
-   *           default: 1
-   *         description: Page number
-   *       - in: query
-   *         name: limit
-   *         schema:
-   *           type: integer
-   *           default: 10
-   *         description: Number of items per page
-   *     responses:
-   *       200:
-   *         description: Search results
-   *         content:
-   *           application/json:
-   *             schema:
-   *               type: object
-   *               properties:
-   *                 items:
-   *                   type: array
-   *                   items:
-   *                     $ref: '#/components/schemas/Sweet'
-   *                 meta:
-   *                   type: object
-   *                   properties:
-   *                     page:
-   *                       type: integer
-   *                     limit:
-   *                       type: integer
-   *                     total:
-   *                       type: integer
-   *                     totalPages:
-   *                       type: integer
-   *       400:
-   *         description: Invalid search query
-   */
-  public searchSweets = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> => {
-    try {
-      const { query, page = 1, limit = 10 } = req.query;
-      if (!query || typeof query !== "string") {
-        res.status(400).json({ message: "Search query is required" });
-        return;
-      }
-      const sweets = await this.sweetService.searchSweets({
-        query,
-        page: Number(page),
-        limit: Number(limit),
-      });
-      res.status(200).json(sweets);
-    } catch (error) {
-      next(error);
-    }
-  };
-
-  public getSweet = async (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): Promise<void> => {
-    try {
-      const { id } = req.params;
-      const sweet = await prisma.sweet.findUnique({
-        where: { id: Number(id) },
-      });
-      if (!sweet) {
+      const id = parseInt(req.params.id);
+      const sweet: Sweet | null = await this.sweetService.getSweetById(id);
+      if (sweet === null) {
         res.status(404).json({ message: "Sweet not found" });
         return;
       }
-      res.status(200).json(sweet);
+      res.json(sweet);
     } catch (error) {
       next(error);
     }
@@ -239,13 +107,40 @@ export class SweetController {
     next: NextFunction
   ): Promise<void> => {
     try {
-      const { id } = req.params;
-      const sweet = await this.sweetService.updateSweet(Number(id), req.body);
-      if (!sweet) {
-        res.status(404).json({ message: "Sweet not found" });
-        return;
-      }
-      res.status(200).json(sweet);
+      const id = parseInt(req.params.id);
+      const body = req.body ?? {};
+      const parsedPrice =
+        body.price !== undefined && body.price !== ""
+          ? parseFloat(String(body.price))
+          : undefined;
+      const rawQuantity =
+        body.quantity !== undefined
+          ? body.quantity
+          : body.stock !== undefined
+          ? body.stock
+          : undefined;
+      const parsedQuantity =
+        rawQuantity !== undefined && rawQuantity !== ""
+          ? parseInt(String(rawQuantity))
+          : undefined;
+
+      const sweetData: any = {
+        name: body.name,
+        description: body.description,
+        category: body.category,
+        price: parsedPrice,
+        quantity: parsedQuantity,
+        image: req.file ? req.file.filename : undefined,
+        isAvailable:
+          parsedQuantity !== undefined ? parsedQuantity > 0 : undefined,
+      };
+      if (body.featured !== undefined)
+        sweetData.featured = body.featured === "true" || body.featured === true;
+      if (body.sugarFree !== undefined)
+        sweetData.sugarFree =
+          body.sugarFree === "true" || body.sugarFree === true;
+      const sweet = await this.sweetService.updateSweet(id, sweetData);
+      res.json(sweet);
     } catch (error) {
       next(error);
     }
@@ -257,169 +152,59 @@ export class SweetController {
     next: NextFunction
   ): Promise<void> => {
     try {
-      const { id } = req.params;
-      await this.sweetService.deleteSweet(Number(id));
+      const id = parseInt(req.params.id);
+      await this.sweetService.deleteSweet(id);
       res.status(204).send();
     } catch (error) {
       next(error);
     }
   };
 
-  /**
-   * @swagger
-   * /api/sweets/{id}/purchase:
-   *   post:
-   *     summary: Purchase a sweet
-   *     tags: [Sweets]
-   *     security:
-   *       - BearerAuth: []
-   *     parameters:
-   *       - in: path
-   *         name: id
-   *         required: true
-   *         schema:
-   *           type: integer
-   *         description: Sweet ID
-   *     requestBody:
-   *       required: true
-   *       content:
-   *         application/json:
-   *           schema:
-   *             type: object
-   *             required:
-   *               - quantity
-   *             properties:
-   *               quantity:
-   *                 type: integer
-   *                 minimum: 1
-   *     responses:
-   *       200:
-   *         description: Purchase successful
-   *         content:
-   *           application/json:
-   *             schema:
-   *               allOf:
-   *                 - $ref: '#/components/schemas/Sweet'
-   *                 - type: object
-   *                   properties:
-   *                     transactionId:
-   *                       type: integer
-   *       400:
-   *         description: Invalid quantity or insufficient stock
-   *       401:
-   *         description: Unauthorized
-   *       404:
-   *         description: Sweet not found
-   */
   public purchaseSweet = async (
     req: Request,
     res: Response,
     next: NextFunction
   ): Promise<void> => {
     try {
-      const { id } = req.params;
-      const { quantity } = req.body;
-      const userId = req.user?.id;
+      const sweetId = parseInt(req.params.id);
+      const userId = (req.user as any).id; // User ID from JWT token
+      const body = req.body ?? {};
+      const quantity =
+        body.quantity !== undefined && body.quantity !== ""
+          ? parseInt(String(body.quantity))
+          : 1;
 
-      if (typeof quantity !== "number" || quantity <= 0) {
-        res.status(400).json({ message: "Valid quantity is required" });
-        return;
-      }
-
-      if (!userId) {
-        res.status(401).json({ message: "User must be authenticated" });
-        return;
-      }
-
-      const sweet = await this.sweetService.purchaseSweet(
-        Number(id),
-        Number(userId),
+      const result = await this.sweetService.purchaseSweet(
+        sweetId,
+        userId,
         quantity
       );
-      res.status(200).json(sweet);
+      res.json(result);
     } catch (error) {
-      if (error instanceof Error) {
-        if (error.message === "Insufficient quantity available") {
-          res.status(400).json({ message: error.message });
-          return;
-        }
-        if (error.message === "Sweet not found") {
-          res.status(404).json({ message: error.message });
-          return;
-        }
-      }
       next(error);
     }
   };
 
-  /**
-   * @swagger
-   * /api/sweets/{id}/restock:
-   *   post:
-   *     summary: Restock a sweet (Admin only)
-   *     tags: [Sweets]
-   *     security:
-   *       - BearerAuth: []
-   *     parameters:
-   *       - in: path
-   *         name: id
-   *         required: true
-   *         schema:
-   *           type: integer
-   *         description: Sweet ID
-   *     requestBody:
-   *       required: true
-   *       content:
-   *         application/json:
-   *           schema:
-   *             type: object
-   *             required:
-   *               - quantity
-   *             properties:
-   *               quantity:
-   *                 type: integer
-   *                 minimum: 1
-   *     responses:
-   *       200:
-   *         description: Restock successful
-   *         content:
-   *           application/json:
-   *             schema:
-   *               allOf:
-   *                 - $ref: '#/components/schemas/Sweet'
-   *                 - type: object
-   *                   properties:
-   *                     transactionId:
-   *                       type: integer
-   *       400:
-   *         description: Invalid quantity
-   *       401:
-   *         description: Unauthorized
-   *       403:
-   *         description: Forbidden - Admin only
-   *       404:
-   *         description: Sweet not found
-   */
   public restockSweet = async (
     req: Request,
     res: Response,
     next: NextFunction
   ): Promise<void> => {
     try {
-      const { id } = req.params;
-      const { quantity } = req.body;
+      const sweetId = parseInt(req.params.id);
+      const userId = (req.user as any).id; // Admin ID from JWT token
+      const body = req.body ?? {};
+      const quantity =
+        body.quantity !== undefined && body.quantity !== ""
+          ? parseInt(String(body.quantity))
+          : 1;
 
-      if (typeof quantity !== "number" || quantity <= 0) {
-        res.status(400).json({ message: "Valid quantity is required" });
-        return;
-      }
-
-      const sweet = await this.sweetService.restockSweet(
-        Number(id),
-        Number(req.user?.id),
+      const result = await this.sweetService.restockSweet(
+        sweetId,
+        userId,
         quantity
       );
-      res.status(200).json(sweet);
+      res.json(result);
     } catch (error) {
       next(error);
     }

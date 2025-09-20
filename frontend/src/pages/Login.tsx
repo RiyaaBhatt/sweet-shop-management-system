@@ -1,20 +1,26 @@
-import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { Eye, EyeOff, Mail, Lock } from 'lucide-react';
-import { useAppDispatch, useAppSelector } from '@/hooks/redux';
-import { loginUser } from '@/store/slices/authSlice';
-import { addToast } from '@/store/slices/uiSlice';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { SweetCard, SweetCardContent, SweetCardHeader, SweetCardTitle, SweetCardDescription } from '@/components/ui/sweet-card';
+import React from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Eye, EyeOff, Mail, Lock } from "lucide-react";
+import { useAppDispatch, useAppSelector } from "@/hooks/redux";
+import { loginUser } from "@/store/slices/authSlice";
+import { addToast } from "@/store/slices/uiSlice";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  SweetCard,
+  SweetCardContent,
+  SweetCardHeader,
+  SweetCardTitle,
+  SweetCardDescription,
+} from "@/components/ui/sweet-card";
 
 const loginSchema = z.object({
-  email: z.string().email('Please enter a valid email address'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
+  email: z.string().email("Please enter a valid email address"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
 type LoginForm = z.infer<typeof loginSchema>;
@@ -35,20 +41,32 @@ const Login: React.FC = () => {
 
   const onSubmit = async (data: LoginForm) => {
     try {
-      const result = await dispatch(loginUser({
-        email: data.email,
-        password: data.password,
-      })).unwrap();
-      dispatch(addToast({
-        message: `Welcome back, ${result.user.name}!`,
-        type: 'success',
-      }));
-      navigate('/');
+      const result = await dispatch(
+        loginUser({
+          email: data.email,
+          password: data.password,
+        })
+      ).unwrap();
+      console.log(result, "result");
+      dispatch(
+        addToast({
+          message: `Welcome back, ${result.user.role?result.user.role:"user"}!`,
+          type: "success",
+        })
+      );
+      // If admin, go to admin dashboard directly
+      if (result.user.role === "admin") {
+        navigate("/admin");
+      } else {
+        navigate("/");
+      }
     } catch (error) {
-      dispatch(addToast({
-        message: 'Login failed. Please check your credentials.',
-        type: 'error',
-      }));
+      dispatch(
+        addToast({
+          message: "Login failed. Please check your credentials.",
+          type: "error",
+        })
+      );
     }
   };
 
@@ -71,7 +89,10 @@ const Login: React.FC = () => {
           <SweetCardContent className="p-8">
             <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
               <div>
-                <Label htmlFor="email" className="block text-sm font-medium text-foreground mb-2">
+                <Label
+                  htmlFor="email"
+                  className="block text-sm font-medium text-foreground mb-2"
+                >
                   Email Address
                 </Label>
                 <div className="relative">
@@ -82,27 +103,32 @@ const Login: React.FC = () => {
                     autoComplete="email"
                     className="pl-10"
                     placeholder="Enter your email"
-                    {...register('email')}
+                    {...register("email")}
                   />
                 </div>
                 {errors.email && (
-                  <p className="mt-1 text-sm text-destructive">{errors.email.message}</p>
+                  <p className="mt-1 text-sm text-destructive">
+                    {errors.email.message}
+                  </p>
                 )}
               </div>
 
               <div>
-                <Label htmlFor="password" className="block text-sm font-medium text-foreground mb-2">
+                <Label
+                  htmlFor="password"
+                  className="block text-sm font-medium text-foreground mb-2"
+                >
                   Password
                 </Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
                     id="password"
-                    type={showPassword ? 'text' : 'password'}
+                    type={showPassword ? "text" : "password"}
                     autoComplete="current-password"
                     className="pl-10 pr-10"
                     placeholder="Enter your password"
-                    {...register('password')}
+                    {...register("password")}
                   />
                   <button
                     type="button"
@@ -117,19 +143,10 @@ const Login: React.FC = () => {
                   </button>
                 </div>
                 {errors.password && (
-                  <p className="mt-1 text-sm text-destructive">{errors.password.message}</p>
+                  <p className="mt-1 text-sm text-destructive">
+                    {errors.password.message}
+                  </p>
                 )}
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div className="text-sm">
-                  <Link
-                    to="/forgot-password"
-                    className="text-primary hover:text-primary/80 font-medium"
-                  >
-                    Forgot password?
-                  </Link>
-                </div>
               </div>
 
               <Button
@@ -139,7 +156,7 @@ const Login: React.FC = () => {
                 className="w-full"
                 disabled={isLoading}
               >
-                {isLoading ? 'Signing in...' : 'Sign In'}
+                {isLoading ? "Signing in..." : "Sign In"}
               </Button>
             </form>
 
@@ -155,7 +172,7 @@ const Login: React.FC = () => {
 
               <div className="mt-6 text-center">
                 <p className="text-sm text-muted-foreground">
-                  Don't have an account?{' '}
+                  Don't have an account?{" "}
                   <Link
                     to="/register"
                     className="font-medium text-primary hover:text-primary/80"
@@ -163,14 +180,6 @@ const Login: React.FC = () => {
                     Sign up now
                   </Link>
                 </p>
-              </div>
-            </div>
-
-            <div className="mt-6 p-4 bg-sweet-cream/50 rounded-lg">
-              <h4 className="text-sm font-medium text-foreground mb-2">Demo Accounts:</h4>
-              <div className="text-xs text-muted-foreground space-y-1">
-                <p><strong>Admin:</strong> admin@sweetdelights.com / password123</p>
-                <p><strong>Customer:</strong> customer@example.com / password123</p>
               </div>
             </div>
           </SweetCardContent>

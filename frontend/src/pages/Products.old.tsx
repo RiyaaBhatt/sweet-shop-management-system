@@ -1,5 +1,5 @@
 import React, { useEffect, useCallback, useState } from "react";
-import { Search, ShoppingCart } from "lucide-react";
+import { Search, Filter, ShoppingCart } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/hooks/redux";
 import { debounce } from "@/lib/utils";
 import {
@@ -28,9 +28,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Sweet } from "@/api/sweets";
-import { purchaseSweet } from "@/store/slices/productsSlice";
-import Noiamge from "../assets/traditional-sweets.jpg";
-const CATEGORIES = ["All", "Traditional Sweets", "Dry Fruits", "Sugar-Free"];
+
 const SORT_OPTIONS = [
   { label: "Name A-Z", value: "name:asc" },
   { label: "Name Z-A", value: "name:desc" },
@@ -39,7 +37,9 @@ const SORT_OPTIONS = [
   { label: "Newest First", value: "createdAt:desc" },
 ];
 
-const Products = () => {
+const CATEGORIES = ["All", "Traditional Sweets", "Dry Fruits", "Sugar-Free"];
+
+const Products: React.FC = () => {
   const dispatch = useAppDispatch();
   const {
     items,
@@ -50,40 +50,30 @@ const Products = () => {
     selectedCategory,
     sortBy,
   } = useAppSelector((state) => state.products);
-  const { user } = useAppSelector((state) => state.auth);
 
   const [page, setPage] = useState(1);
 
   useEffect(() => {
-    const [field, order] = sortBy ? sortBy.split(":") : [undefined, undefined];
-    dispatch(
-      fetchProducts({
-        search: searchQuery,
-        category: selectedCategory === "All" ? undefined : selectedCategory,
-        sortBy: field,
-        sortOrder: order as "asc" | "desc" | undefined,
-        page,
-      })
-    );
+    dispatch(fetchProducts({
+      search: searchQuery,
+      category: selectedCategory === "All" ? undefined : selectedCategory,
+      sortBy: sortBy?.split(":")[0] as any,
+      sortOrder: sortBy?.split(":")[1] as any,
+      page,
+    }));
   }, [dispatch, searchQuery, selectedCategory, sortBy, page]);
 
-  // stable debounced callback using ref to avoid recreating on every render
-  const debouncedRef = React.useRef(
+  const debouncedSearch = useCallback(
     debounce((query: string) => {
       dispatch(setSearchQuery(query));
       setPage(1);
-    }, 300)
+    }, 300),
+    [dispatch]
   );
 
-  const debouncedSearch = useCallback((query: string) => {
-    debouncedRef.current(query);
-  }, []);
-
-  const handleSearch = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      debouncedSearch(e.target.value);
-    },
-    [debouncedSearch]
+  const handleSearch = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    debouncedSearch(e.target.value);
+  }, [debouncedSearch]);
   );
 
   const handleCategoryChange = useCallback(
@@ -109,58 +99,33 @@ const Products = () => {
           id: sweet.id.toString(),
           name: sweet.name,
           price: sweet.price,
-          image: sweet.image || Noiamge,
+          image: sweet.image,
+          quantity: 1,
         })
       );
 
       dispatch(
         addToast({
-          message: `product has been added to your cart.`,
-          type: "success",
+          title: "Added to cart",
+          description: `${sweet.name} has been added to your cart.`,
+          variant: "success",
         })
       );
     },
     [dispatch]
   );
 
-  const handlePurchase = useCallback(
-    async (id: number) => {
-      try {
-        await dispatch(purchaseSweet({ id, quantity: 1 })).unwrap();
-        dispatch(addToast({ message: "Purchase successful", type: "success" }));
-      } catch (err) {
-        dispatch(
-          addToast({
-            message: "Purchase due to insuffient quantity",
-            type: "error",
-          })
-        );
-      }
-    },
-    [dispatch]
-  );
-
-  if (error) {
-    return (
-      <div className="container mx-auto p-4">
-        <div className="text-red-500">{error}</div>
-      </div>
-    );
-  }
-
   return (
     <div className="container mx-auto p-4">
       <div className="flex flex-col md:flex-row gap-4 mb-6">
         <div className="flex-1">
-          <div className="relative">
-            <Input
-              placeholder="Search sweets..."
-              onChange={handleSearch}
-              defaultValue={searchQuery}
-              className="w-full"
-            />
-            <Search className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          </div>
+          <Input
+            placeholder="Search sweets..."
+            onChange={handleSearch}
+            defaultValue={searchQuery}
+            className="w-full"
+            icon={<Search className="w-4 h-4" />}
+          />
         </div>
         <div className="flex gap-4">
           <Select value={selectedCategory} onValueChange={handleCategoryChange}>
@@ -207,13 +172,11 @@ const Products = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {items.map((sweet) => (
               <Card key={sweet.id}>
-                {/* <img
-                  src={
-                    sweet.image ? `../assets/${sweet.image}` : Noiamge
-                  }
+                <img
+                  src={`/src/assets/${sweet.image}`}
                   alt={sweet.name}
                   className="w-full h-48 object-cover rounded-t-lg"
-                /> */}
+                />
                 <CardHeader>
                   <CardTitle>{sweet.name}</CardTitle>
                   <CardDescription>{sweet.description}</CardDescription>
@@ -236,33 +199,14 @@ const Products = () => {
                   </div>
                 </CardContent>
                 <CardFooter>
-                  <div className="flex gap-2 w-full">
-                    {user?.role !== "admin" ? (
-                      <>
-                      <div>Quantity Available {sweet.quantity}</div>
-                      <Button
-                        className="flex-1"
-                        onClick={() => handleAddToCart(sweet)}
-                        disabled={sweet.quantity < 1}
-                      >
-                        <ShoppingCart className="w-4 h-4 mr-2" />
-                        {sweet.quantity > 1 ? "Add to Cart" : "Out of Stock"}
-                      </Button>
-                      <Button
-                        variant="outline"
-                        className="w-28"
-                        onClick={() => handlePurchase(sweet.id)}
-                        disabled={sweet.quantity < 1}
-                      >
-                        Buy
-                      </Button>
-                      </>
-                    ) : (
-                      <div className="text-sm text-muted-foreground">
-                        Admin view
-                      </div>
-                    )}
-                  </div>
+                  <Button
+                    className="w-full"
+                    onClick={() => handleAddToCart(sweet)}
+                    disabled={!sweet.isAvailable}
+                  >
+                    <ShoppingCart className="w-4 h-4 mr-2" />
+                    {sweet.isAvailable ? "Add to Cart" : "Out of Stock"}
+                  </Button>
                 </CardFooter>
               </Card>
             ))}
@@ -291,6 +235,22 @@ const Products = () => {
           )}
         </>
       )}
+    </div>
+  );
+            ))}
+          </div>
+        )}
+
+        {/* Results Count */}
+        {!isLoading && filteredItems.length > 0 && (
+          <div className="mt-8 text-center text-muted-foreground">
+            Showing {filteredItems.length} sweet
+            {filteredItems.length !== 1 ? "s" : ""}
+            {selectedCategory && ` in ${selectedCategory}`}
+            {searchQuery && ` matching "${searchQuery}"`}
+          </div>
+        )}
+      </div>
     </div>
   );
 };

@@ -9,20 +9,27 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90 shadow-warm",
-        destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
-        outline: "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
-        secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+        default:
+          "bg-primary text-primary-foreground hover:bg-primary/90 shadow-warm",
+        destructive:
+          "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+        outline:
+          "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+        secondary:
+          "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
-        
+
         // Sweet Shop Variants
         hero: "bg-gradient-hero text-white font-semibold shadow-glow hover:shadow-warm hover:scale-105 transition-all duration-300",
-        sweet: "bg-sweet-gold text-white font-medium shadow-soft hover:bg-sweet-gold/90 hover:shadow-warm sweet-hover",
-        cream: "bg-sweet-cream text-sweet-brown border border-sweet-gold/20 hover:bg-sweet-gold hover:text-white sweet-hover",
+        sweet:
+          "bg-sweet-gold text-white font-medium shadow-soft hover:bg-sweet-gold/90 hover:shadow-warm sweet-hover",
+        cream:
+          "bg-sweet-cream text-sweet-brown border border-sweet-gold/20 hover:bg-sweet-gold hover:text-white sweet-hover",
         mint: "bg-sweet-mint text-sweet-brown hover:bg-sweet-mint/80 sweet-hover",
         pink: "bg-sweet-pink text-sweet-brown hover:bg-sweet-pink/80 sweet-hover",
-        gradient: "bg-gradient-accent text-sweet-brown font-medium hover:scale-105 transition-all duration-300 shadow-soft",
+        gradient:
+          "bg-gradient-accent text-sweet-brown font-medium hover:scale-105 transition-all duration-300 shadow-soft",
         cart: "bg-primary text-primary-foreground hover:bg-primary/90 shadow-warm sweet-bounce-on-hover",
       },
       size: {
@@ -37,7 +44,7 @@ const buttonVariants = cva(
       variant: "default",
       size: "default",
     },
-  },
+  }
 );
 
 export interface ButtonProps
@@ -49,8 +56,19 @@ export interface ButtonProps
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, asChild = false, ...props }, ref) => {
     const Comp = asChild ? Slot : "button";
-    return <Comp className={cn(buttonVariants({ variant, size, className }))} ref={ref} {...props} />;
-  },
+    // Ensure native buttons default to type="button" to avoid accidental form submits
+    const finalProps =
+      Comp === "button" && !("type" in props)
+        ? { type: "button", ...props }
+        : props;
+    return (
+      <Comp
+        className={cn(buttonVariants({ variant, size, className }))}
+        ref={ref}
+        {...finalProps}
+      />
+    );
+  }
 );
 Button.displayName = "Button";
 

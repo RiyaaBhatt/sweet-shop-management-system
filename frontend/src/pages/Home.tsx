@@ -96,9 +96,7 @@ const Home: React.FC = () => {
                   Shop Now <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
               </Button>
-              <Button variant="cream" size="xl" asChild>
-                <Link to="/categories">Explore Categories</Link>
-              </Button>
+            
             </div>
           </div>
         </div>
@@ -135,64 +133,7 @@ const Home: React.FC = () => {
       </section>
 
       {/* Featured Products */}
-      {featuredProducts.length > 0 && (
-        <section className="py-16">
-          <div className="container mx-auto px-4">
-            <div className="text-center mb-12">
-              <h2 className="font-heading text-3xl md:text-4xl font-bold text-foreground mb-4">
-                Featured Sweets
-              </h2>
-              <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-                Our most popular and loved sweets, crafted to perfection
-              </p>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {featuredProducts.map((product) => (
-                <SweetCard key={product.id} variant="featured" className="group cursor-pointer">
-                  <SweetCardContent className="p-0">
-                  <div className="aspect-square bg-sweet-cream rounded-t-xl mb-4 overflow-hidden">
-                    <img
-                      src={traditionalImage}
-                      alt={product.name}
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                    />
-                  </div>
-                    <div className="px-6 pb-6">
-                      <SweetCardHeader className="mb-4">
-                        <SweetCardTitle className="text-xl">{product.name}</SweetCardTitle>
-                        <SweetCardDescription>{product.description}</SweetCardDescription>
-                      </SweetCardHeader>
-                      <div className="flex items-center justify-between">
-                        <span className="text-2xl font-bold text-primary">₹{product.price}</span>
-                        <div className="flex items-center text-yellow-500">
-                          <Star className="h-4 w-4 fill-current" />
-                          <Star className="h-4 w-4 fill-current" />
-                          <Star className="h-4 w-4 fill-current" />
-                          <Star className="h-4 w-4 fill-current" />
-                          <Star className="h-4 w-4 fill-current" />
-                        </div>
-                      </div>
-                      <Button variant="sweet" className="w-full mt-4" size="sm">
-                        Add to Cart
-                      </Button>
-                    </div>
-                  </SweetCardContent>
-                </SweetCard>
-              ))}
-            </div>
-            
-            <div className="text-center mt-8">
-              <Button variant="gradient" size="lg" asChild>
-                <Link to="/products">
-                  View All Products <ArrowRight className="ml-2 h-5 w-5" />
-                </Link>
-              </Button>
-            </div>
-          </div>
-        </section>
-      )}
-
+   
       {/* Features Section */}
       <section className="py-16 bg-gradient-card">
         <div className="container mx-auto px-4">

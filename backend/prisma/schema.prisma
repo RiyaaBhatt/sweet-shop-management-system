@@ -24,10 +24,14 @@ model User {
 model Sweet {
   id          Int           @id @default(autoincrement())
   name        String
+  description String
   category    String
   price       Float
   quantity    Int
-  imageUrl    String?       // URL or path to the uploaded image
+  image       String?       // URL or path to the uploaded image
+  isAvailable Boolean      @default(true)
+  featured    Boolean      @default(false)
+  sugarFree   Boolean      @default(false)
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
   Transaction Transaction[]

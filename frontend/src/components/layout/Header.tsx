@@ -1,11 +1,23 @@
-import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { ShoppingCart, Search, User, Menu, Moon, Sun, Heart } from 'lucide-react';
-import { useAppSelector, useAppDispatch } from '@/hooks/redux';
-import { Button } from '@/components/ui/button';
-import { toggleTheme, toggleMobileMenu, toggleSearch } from '@/store/slices/uiSlice';
-import { logout } from '@/store/slices/authSlice';
-import { toggleCart } from '@/store/slices/cartSlice';
+import React from "react";
+import { Link, useNavigate } from "react-router-dom";
+import {
+  ShoppingCart,
+  Search,
+  User,
+  Menu,
+  Moon,
+  Sun,
+  Heart,
+} from "lucide-react";
+import { useAppSelector, useAppDispatch } from "@/hooks/redux";
+import { Button } from "@/components/ui/button";
+import {
+  toggleTheme,
+  toggleMobileMenu,
+  toggleSearch,
+} from "@/store/slices/uiSlice";
+import { logout } from "@/store/slices/authSlice";
+import { toggleCart } from "@/store/slices/cartSlice";
 
 const Header: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -16,7 +28,7 @@ const Header: React.FC = () => {
 
   const handleLogout = () => {
     dispatch(logout());
-    navigate('/');
+    navigate("/");
   };
 
   return (
@@ -48,12 +60,7 @@ const Header: React.FC = () => {
           >
             Products
           </Link>
-          <Link
-            to="/categories"
-            className="transition-colors hover:text-primary text-muted-foreground hover:text-foreground"
-          >
-            Categories
-          </Link>
+
           <Link
             to="/about"
             className="transition-colors hover:text-primary text-muted-foreground hover:text-foreground"
@@ -71,14 +78,6 @@ const Header: React.FC = () => {
         {/* Actions */}
         <div className="flex items-center space-x-2">
           {/* Search */}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => dispatch(toggleSearch())}
-            className="hidden sm:flex"
-          >
-            <Search className="h-4 w-4" />
-          </Button>
 
           {/* Theme Toggle */}
           <Button
@@ -86,45 +85,47 @@ const Header: React.FC = () => {
             size="icon"
             onClick={() => dispatch(toggleTheme())}
           >
-            {theme === 'light' ? (
+            {theme === "light" ? (
               <Moon className="h-4 w-4" />
             ) : (
               <Sun className="h-4 w-4" />
             )}
           </Button>
 
-          {/* Wishlist */}
-          {isAuthenticated && (
-            <Button variant="ghost" size="icon">
-              <Heart className="h-4 w-4" />
+          {/* Cart - hide for admin users */}
+          {user?.role !== "admin" && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={(e) => {
+                // Navigate to cart page on click. If user holds shift, toggle the cart drawer instead.
+                if ((e as React.MouseEvent).shiftKey) {
+                  dispatch(toggleCart());
+                } else {
+                  navigate("/cart");
+                }
+              }}
+              className="relative z-50"
+            >
+              <ShoppingCart className="h-4 w-4" />
+              {itemsCount > 0 && (
+                <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center font-medium">
+                  {itemsCount}
+                </span>
+              )}
             </Button>
           )}
-
-          {/* Cart */}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => dispatch(toggleCart())}
-            className="relative"
-          >
-            <ShoppingCart className="h-4 w-4" />
-            {itemsCount > 0 && (
-              <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center font-medium">
-                {itemsCount}
-              </span>
-            )}
-          </Button>
 
           {/* User Menu */}
           {isAuthenticated ? (
             <div className="flex items-center space-x-2">
               <span className="hidden sm:block text-sm text-muted-foreground">
-                Hello, {user?.name}
+                Hello
               </span>
               <Button variant="ghost" size="sm" onClick={handleLogout}>
                 Logout
               </Button>
-              {user?.role === 'admin' && (
+              {user?.role === "admin" && (
                 <Button variant="sweet" size="sm" asChild>
                   <Link to="/admin">Admin Panel</Link>
                 </Button>
@@ -180,7 +181,7 @@ const Header: React.FC = () => {
                 Categories
               </Link>
               <Link
-                to="/about"  
+                to="/about"
                 className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
                 onClick={() => dispatch(toggleMobileMenu())}
               >
@@ -194,16 +195,22 @@ const Header: React.FC = () => {
                 Contact
               </Link>
             </nav>
-            
+
             {!isAuthenticated && (
               <div className="flex flex-col space-y-2 pt-3 border-t">
                 <Button variant="ghost" size="sm" asChild>
-                  <Link to="/login" onClick={() => dispatch(toggleMobileMenu())}>
+                  <Link
+                    to="/login"
+                    onClick={() => dispatch(toggleMobileMenu())}
+                  >
                     Login
                   </Link>
                 </Button>
                 <Button variant="sweet" size="sm" asChild>
-                  <Link to="/register" onClick={() => dispatch(toggleMobileMenu())}>
+                  <Link
+                    to="/register"
+                    onClick={() => dispatch(toggleMobileMenu())}
+                  >
                     Sign Up
                   </Link>
                 </Button>

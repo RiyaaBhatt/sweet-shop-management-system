@@ -19,6 +19,7 @@ import FAQ from "./pages/FAQ";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import NotFound from "./pages/NotFound";
+import Cart from "./pages/Cart";
 
 const queryClient = new QueryClient();
 
@@ -43,6 +44,7 @@ const App = () => (
               <Route path="/faq" element={<FAQ />} />
               <Route path="/privacy" element={<Privacy />} />
               <Route path="/terms" element={<Terms />} />
+              <Route path="/cart" element={<Cart />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

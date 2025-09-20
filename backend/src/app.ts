@@ -24,12 +24,14 @@ const corsOptions: CorsOptions = {
     callback: (err: Error | null, allow?: boolean) => void
   ) => {
     const allowedOrigins = [
-      process.env.FRONTEND_URL || "http://localhost:5173",
+      process.env.FRONTEND_URL || "http://localhost:8080/",
       process.env.API_URL || "http://localhost:8000",
       "http://localhost:8000", // Swagger UI
     ];
 
-    if (!origin || allowedOrigins.includes(origin)) {
+    if (process.env.NODE_ENV !== "production") {
+      callback(null, true); // Allow all in development
+    } else if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
       callback(new Error("Not allowed by CORS"));

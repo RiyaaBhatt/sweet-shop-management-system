@@ -7,9 +7,9 @@ const router = Router();
 const sweetController = new SweetController();
 
 // Public routes
-router.get("/", sweetController.getSweets);
-router.get("/search", sweetController.searchSweets);
-router.get("/:id", sweetController.getSweet);
+router.get("/", sweetController.getAllSweets);
+router.get("/search", sweetController.getAllSweets); // using same handler for search as it's handled by query params
+router.get("/:id", sweetController.getSweetById);
 
 // Protected routes that require authentication
 router.use(authenticate);
@@ -22,7 +22,12 @@ router.post(
   upload.single("image"),
   sweetController.createSweet
 );
-router.put("/:id", requireAdmin, sweetController.updateSweet);
+router.put(
+  "/:id",
+  requireAdmin,
+  upload.single("image"),
+  sweetController.updateSweet
+);
 router.delete("/:id", requireAdmin, sweetController.deleteSweet);
 router.post("/:id/restock", requireAdmin, sweetController.restockSweet);
 

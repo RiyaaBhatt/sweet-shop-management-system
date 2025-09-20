@@ -48,6 +48,10 @@ interface PaginationParams {
 }
 
 interface SearchParams extends PaginationParams {
+  search?: string;
+  category?: string;
+  sortBy?: string;
+  sortOrder?: "asc" | "desc";
   query: string;
 }
 
@@ -62,6 +66,9 @@ interface PaginatedResponse<T> {
 }
 
 export class SweetService {
+  async getSweetById(id: number) {
+    return prisma.sweet.findUnique({ where: { id } });
+  }
   async createSweet(dto: CreateSweetDto) {
     const sweet = await prisma.sweet.create({
       data: dto,
@@ -96,15 +103,32 @@ export class SweetService {
     };
   }
 
-  async searchSweets(params: SearchParams): Promise<PaginatedResponse<any>> {
+  async getAllSweets(params: SearchParams): Promise<PaginatedResponse<any>> {
     const page = params.page || 1;
     const limit = params.limit || 10;
     const skip = (page - 1) * limit;
 
     const where = {
-      OR: [
-        { name: { contains: params.query, mode: "insensitive" as const } },
-        { category: { contains: params.query, mode: "insensitive" as const } },
+      AND: [
+        params.search
+          ? {
+              OR: [
+                {
+                  name: {
+                    contains: params.search,
+                    mode: "insensitive" as const,
+                  },
+                },
+                {
+                  description: {
+                    contains: params.search,
+                    mode: "insensitive" as const,
+                  },
+                },
+              ],
+            }
+          : {},
+        params.category ? { category: { equals: params.category } } : {},
       ],
     };
 
@@ -113,7 +137,13 @@ export class SweetService {
         where,
         skip,
         take: limit,
-        orderBy: { createdAt: "desc" },
+        orderBy: params.sortBy
+          ? {
+              [params.sortBy]: params.sortOrder || "desc",
+            }
+          : {
+              createdAt: "desc",
+            },
       }),
       prisma.sweet.count({ where }),
     ]);

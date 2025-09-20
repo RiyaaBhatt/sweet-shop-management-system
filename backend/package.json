@@ -6,7 +6,8 @@
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
-    "test": "jest --config jest.config.mjs --runInBand"
+    "test": "jest --config jest.config.mjs --runInBand",
+    "seed": "tsx prisma/seed.ts"
   },
   "keywords": [],
   "author": "",
@@ -15,11 +16,13 @@
   "description": "",
   "dependencies": {
     "@prisma/client": "^6.16.2",
+    "@types/bcryptjs": "^3.0.0",
     "@types/express-rate-limit": "^6.0.2",
     "@types/multer": "^2.0.0",
     "@types/swagger-jsdoc": "^6.0.4",
     "@types/swagger-ui-express": "^4.1.8",
     "bcrypt": "^6.0.0",
+    "bcryptjs": "^3.0.2",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
     "dotenv": "^17.2.2",
