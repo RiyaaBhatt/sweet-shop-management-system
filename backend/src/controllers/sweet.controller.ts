@@ -27,7 +27,7 @@ export class SweetController {
    *     requestBody:
    *       required: true
    *       content:
-   *         application/json:
+   *         multipart/form-data:
    *           schema:
    *             type: object
    *             required:
@@ -44,6 +44,9 @@ export class SweetController {
    *                 type: number
    *               quantity:
    *                 type: integer
+   *               image:
+   *                 type: string
+   *                 format: binary
    *     responses:
    *       201:
    *         description: Sweet created successfully
@@ -64,7 +67,13 @@ export class SweetController {
     next: NextFunction
   ): Promise<void> => {
     try {
-      const sweet = await this.sweetService.createSweet(req.body);
+      const sweetData = {
+        ...req.body,
+        price: parseFloat(req.body.price),
+        quantity: parseInt(req.body.quantity),
+        imageUrl: req.file ? `/uploads/${req.file.filename}` : undefined,
+      };
+      const sweet = await this.sweetService.createSweet(sweetData);
       res.status(201).json(sweet);
     } catch (error) {
       next(error);

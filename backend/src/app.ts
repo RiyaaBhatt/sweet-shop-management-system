@@ -43,6 +43,7 @@ const corsOptions: CorsOptions = {
 
 app.use(cors(corsOptions));
 app.use(express.json());
+app.use("/uploads", express.static("uploads"));
 // Parse cookies so controllers can read req.cookies.refreshToken. Try to use
 // cookie-parser if installed; otherwise fall back to a tiny parser for tests.
 try {

@@ -27,6 +27,7 @@ model Sweet {
   category    String
   price       Float
   quantity    Int
+  imageUrl    String?       // URL or path to the uploaded image
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
   Transaction Transaction[]

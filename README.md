@@ -115,6 +115,7 @@ cd frontend
 npm test
 ```
 
+
 ## Development Guidelines
 
 - Follow the established TypeScript configuration

@@ -1,68 +1,225 @@
-:root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+/* Sweet Shop Design System - Warm, inviting colors with pastel palette */
 
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
-}
-
-body {
-  margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
-}
-
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
-}
-
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
-}
-
-@media (prefers-color-scheme: light) {
+@layer base {
   :root {
-    color: #213547;
-    background-color: #ffffff;
+    /* Core sweet shop palette */
+    --background: 44 60% 98%; /* Soft cream background */
+    --foreground: 25 30% 20%; /* Warm dark brown text */
+
+    --card: 0 0% 100%; /* Pure white cards */
+    --card-foreground: 25 30% 20%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 25 30% 20%;
+
+    /* Primary - Warm saffron/golden */
+    --primary: 45 90% 65%; /* Beautiful saffron */
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 45 85% 75%; /* Lighter saffron for glows */
+
+    /* Secondary - Soft cream tones */
+    --secondary: 44 40% 92%; /* Warm cream */
+    --secondary-foreground: 25 30% 20%;
+
+    /* Accent colors - Mint and pink */
+    --accent: 160 50% 85%; /* Soft mint green */
+    --accent-foreground: 25 30% 20%;
+    --accent-pink: 340 60% 85%; /* Soft pink */
+    --accent-pink-foreground: 25 30% 20%;
+
+    --muted: 44 30% 90%;
+    --muted-foreground: 25 15% 55%;
+
+    --destructive: 0 70% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 44 25% 88%;
+    --input: 44 25% 88%;
+    --ring: 45 90% 65%;
+
+    --radius: 0.75rem;
+
+    /* Sweet shop specific colors */
+    --sweet-gold: 45 85% 60%;
+    --sweet-cream: 44 50% 95%;
+    --sweet-mint: 160 50% 80%;
+    --sweet-pink: 340 60% 80%;
+    --sweet-brown: 25 40% 30%;
+
+    /* Gradients */
+    --gradient-hero: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)));
+    --gradient-card: linear-gradient(135deg, hsl(var(--sweet-cream)), hsl(var(--accent)));
+    --gradient-accent: linear-gradient(135deg, hsl(var(--accent)), hsl(var(--accent-pink)));
+
+    /* Shadows with warm tones */
+    --shadow-warm: 0 4px 20px -4px hsl(var(--primary) / 0.25);
+    --shadow-soft: 0 2px 10px -2px hsl(var(--sweet-brown) / 0.1);
+    --shadow-glow: 0 0 20px hsl(var(--primary-glow) / 0.4);
+
+    /* Animations */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --bounce-gentle: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+
+    --radius: 0.75rem;
+
+    --sidebar-background: 0 0% 98%;
+
+    --sidebar-foreground: 240 5.3% 26.1%;
+
+    --sidebar-primary: 240 5.9% 10%;
+
+    --sidebar-primary-foreground: 0 0% 98%;
+
+    --sidebar-accent: 240 4.8% 95.9%;
+
+    --sidebar-accent-foreground: 240 5.9% 10%;
+
+    --sidebar-border: 220 13% 91%;
+
+    --sidebar-ring: 217.2 91.2% 59.8%;
   }
-  a:hover {
-    color: #747bff;
+
+  .dark {
+    /* Elegant dark mode with sophisticated warm tones */
+    --background: 25 8% 6%; /* Rich, deep chocolate brown */
+    --foreground: 45 15% 88%; /* Soft warm white */
+
+    --card: 25 12% 9%; /* Elevated card background */
+    --card-foreground: 45 15% 88%;
+
+    --popover: 25 15% 10%;
+    --popover-foreground: 45 15% 88%;
+
+    --primary: 45 95% 68%; /* Luminous golden saffron */
+    --primary-foreground: 25 8% 6%;
+    --primary-glow: 45 90% 75%;
+
+    --secondary: 25 18% 12%; /* Refined secondary */
+    --secondary-foreground: 45 15% 88%;
+
+    --accent: 160 35% 65%; /* Sophisticated mint */
+    --accent-foreground: 25 8% 6%;
+    --accent-pink: 340 45% 72%; /* Elegant rose */
+    --accent-pink-foreground: 25 8% 6%;
+
+    --muted: 25 15% 11%;
+    --muted-foreground: 45 8% 65%; /* Balanced muted text */
+
+    --destructive: 0 65% 60%;
+    --destructive-foreground: 45 15% 88%;
+
+    --border: 25 15% 14%; /* Subtle but visible borders */
+    --input: 25 15% 14%;
+    --ring: 45 95% 68%;
+
+    /* Elegant dark mode sweet colors */
+    --sweet-gold: 45 88% 65%; /* Rich golden */
+    --sweet-cream: 45 25% 85%; /* Luxurious cream */
+    --sweet-mint: 160 35% 65%; /* Refined mint */
+    --sweet-pink: 340 45% 72%; /* Sophisticated rose */
+    --sweet-brown: 45 15% 88%; /* Warm light brown */
+
+    /* Sophisticated dark gradients */
+    --gradient-hero: linear-gradient(135deg, hsl(45 95% 68%), hsl(45 85% 75%));
+    --gradient-card: linear-gradient(135deg, hsl(25 15% 11%), hsl(25 18% 14%));
+    --gradient-accent: linear-gradient(135deg, hsl(160 35% 65%), hsl(340 45% 72%));
+
+    /* Refined dark shadows */
+    --shadow-warm: 0 8px 32px -8px hsl(45 95% 68% / 0.25);
+    --shadow-soft: 0 4px 16px -4px hsl(0 0% 0% / 0.4);
+    --shadow-glow: 0 0 32px hsl(45 90% 75% / 0.15);
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
   }
-  button {
-    background-color: #f9f9f9;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Poppins', system-ui, -apple-system, sans-serif;
+  }
+}
+
+@layer components {
+  /* Sweet shop specific animations */
+  .sweet-bounce {
+    animation: sweetBounce 0.6s var(--bounce-gentle);
+  }
+
+  .sweet-glow {
+    box-shadow: var(--shadow-glow);
+  }
+
+  .sweet-hover {
+    transition: var(--transition-smooth);
+  }
+  
+  .sweet-hover:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-warm);
+  }
+
+  /* Gradient backgrounds */
+  .bg-gradient-hero {
+    background: var(--gradient-hero);
+  }
+
+  .bg-gradient-card {
+    background: var(--gradient-card);
+  }
+
+  .bg-gradient-accent {
+    background: var(--gradient-accent);
+  }
+}
+
+@layer utilities {
+  /* Custom keyframes */
+  @keyframes sweetBounce {
+    0%, 20%, 53%, 80%, 100% {
+      transform: translate3d(0, 0, 0);
+    }
+    40%, 43% {
+      transform: translate3d(0, -8px, 0);
+    }
+    70% {
+      transform: translate3d(0, -4px, 0);
+    }
+    90% {
+      transform: translate3d(0, -2px, 0);
+    }
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease-out;
   }
 }

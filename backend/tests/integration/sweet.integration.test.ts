@@ -9,6 +9,8 @@ import {
   it,
 } from "@jest/globals";
 import app from "../../src/app";
+import path from "path";
+import fs from "fs";
 import prisma from "../../src/config/prisma.client";
 import { generateTokens } from "../../src/utils/jwt";
 
@@ -67,6 +69,17 @@ describe("Sweet API Integration Tests", () => {
     await prisma.transaction.deleteMany();
     await prisma.sweet.deleteMany();
     await prisma.user.deleteMany();
+
+    // Clean up uploaded files
+    const uploadsDir = path.join(__dirname, "..", "..", "uploads");
+    if (fs.existsSync(uploadsDir)) {
+      fs.readdirSync(uploadsDir).forEach((file) => {
+        const filePath = path.join(uploadsDir, file);
+        if (file !== ".gitkeep") {
+          fs.unlinkSync(filePath);
+        }
+      });
+    }
   });
 
   describe("GET /sweets", () => {
@@ -90,29 +103,64 @@ describe("Sweet API Integration Tests", () => {
   });
 
   describe("POST /sweets", () => {
-    const newSweet = {
-      name: "New Sweet",
-      category: "Test Category",
-      price: 75.0,
-      quantity: 50,
-    };
+    // Create a test image file
+    const testImagePath = path.join(__dirname, "..", "test-image.jpg");
 
-    it("should create a new sweet when admin is authenticated", async () => {
+    beforeAll(() => {
+      // Create a dummy test image if it doesn't exist
+      if (!fs.existsSync(testImagePath)) {
+        fs.writeFileSync(testImagePath, "dummy image content");
+      }
+    });
+
+    afterAll(() => {
+      // Clean up test image
+      if (fs.existsSync(testImagePath)) {
+        fs.unlinkSync(testImagePath);
+      }
+    });
+
+    it("should create a new sweet with image when admin is authenticated", async () => {
       const res = await request(app)
         .post("/api/sweets")
         .set("Authorization", `Bearer ${adminToken}`)
-        .send(newSweet)
+        .field("name", "New Sweet")
+        .field("category", "Test Category")
+        .field("price", "75.0")
+        .field("quantity", "50")
+        .attach("image", testImagePath)
         .expect(201);
 
-      expect(res.body.name).toBe(newSweet.name);
+      expect(res.body.name).toBe("New Sweet");
       expect(res.body.id).toBeDefined();
+      expect(res.body.imageUrl).toBeDefined();
+      expect(res.body.imageUrl).toMatch(/^\/uploads\/.+$/);
+    });
+
+    it("should create a new sweet without image when admin is authenticated", async () => {
+      const res = await request(app)
+        .post("/api/sweets")
+        .set("Authorization", `Bearer ${adminToken}`)
+        .field("name", "New Sweet No Image")
+        .field("category", "Test Category")
+        .field("price", "75.0")
+        .field("quantity", "50")
+        .expect(201);
+
+      expect(res.body.name).toBe("New Sweet No Image");
+      expect(res.body.id).toBeDefined();
+      expect(res.body.imageUrl).toBeNull();
     });
 
     it("should not allow sweet creation for non-admin users", async () => {
       await request(app)
         .post("/api/sweets")
         .set("Authorization", `Bearer ${userToken}`)
-        .send(newSweet)
+        .field("name", "New Sweet")
+        .field("category", "Test Category")
+        .field("price", "75.0")
+        .field("quantity", "50")
+        .attach("image", testImagePath)
         .expect(403);
     });
   });
