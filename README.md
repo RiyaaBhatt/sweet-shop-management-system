@@ -108,12 +108,9 @@ cd backend
 npm test
 ```
 
-### Frontend Tests
+### Test coverage Report
+<img width="986" height="366" alt="image" src="https://github.com/user-attachments/assets/6f3ed271-4739-428b-90a6-6f4c97aa2574" />
 
-```bash
-cd frontend
-npm test
-```
 
 ## Development Guidelines
 
