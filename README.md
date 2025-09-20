@@ -6,7 +6,6 @@ A full-stack application for managing a sweet shop's inventory, orders, and user
 
 - 🔐 Secure user authentication and authorization
 - 🍬 Sweet inventory management
-- 📊 Order tracking and management
 - 🎯 Role-based access control
 - 📱 Responsive frontend interface
 - 📚 API documentation with Swagger
