@@ -9,14 +9,16 @@ datasource db {
 }
 
 model User {
-  id          Int           @id @default(autoincrement())
-  email       String        @unique
-  name        String?
-  password    String
-  role        String        @default("user")
-  createdAt   DateTime      @default(now())
-  // optional: transactions, etc.
-  Transaction Transaction[]
+  id            Int           @id @default(autoincrement())
+  email         String        @unique
+  name          String?
+  password      String
+  role          String        @default("user")
+  tokenVersion  Int           @default(0)  // For refresh token rotation/invalidation
+  refreshToken  String?       // Current refresh token
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  Transaction   Transaction[]
 }
 
 model Sweet {

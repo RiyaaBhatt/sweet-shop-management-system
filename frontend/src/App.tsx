@@ -1,10 +1,21 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+/**
+ * @fileoverview Main Application Component
+ * Root component of the Sweet Shop Management System frontend.
+ * Handles the main layout and routing of the application.
+ */
 
+import { useState } from "react";
+import reactLogo from "./assets/react.svg";
+import viteLogo from "/vite.svg";
+import "./App.css";
+
+/**
+ * Root component of the application
+ * Provides the main layout structure and routing configuration
+ * @returns {JSX.Element} The rendered application
+ */
 function App() {
-  const [count, setCount] = useState(0)
+  const [count, setCount] = useState(0);
 
   return (
     <>
@@ -29,7 +40,7 @@ function App() {
         Click on the Vite and React logos to learn more
       </p>
     </>
-  )
+  );
 }
 
-export default App
+export default App;

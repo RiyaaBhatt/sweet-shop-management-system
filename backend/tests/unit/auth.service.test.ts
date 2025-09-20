@@ -1,7 +1,7 @@
 import { AuthService } from "../../src/services/auth.service";
 import prisma from "../../src/config/prisma.client";
 import bcrypt from "bcrypt";
-import { signToken } from "../../src/utils/jwt";
+import { generateTokens, verifyRefreshToken } from "../../src/utils/jwt";
 
 // Import jest for runtime utilities
 import { jest } from "@jest/globals";
@@ -11,6 +11,7 @@ jest.mock("../../src/config/prisma.client", () => ({
   user: {
     findUnique: jest.fn(),
     create: jest.fn(),
+    update: jest.fn(),
   },
 }));
 
@@ -20,7 +21,8 @@ jest.mock("bcrypt", () => ({
 }));
 
 jest.mock("../../src/utils/jwt", () => ({
-  signToken: jest.fn(),
+  generateTokens: jest.fn(),
+  verifyRefreshToken: jest.fn(),
 }));
 
 describe("AuthService", () => {
@@ -43,15 +45,22 @@ describe("AuthService", () => {
       ).rejects.toThrow("User already exists");
     });
 
-    it("should hash password, create user, and return token/user", async () => {
+    it("should hash password, create user, and return tokens/user", async () => {
+      const mockTokens = {
+        accessToken: "access.token.here",
+        refreshToken: "refresh.token.here",
+      };
+
       (prisma.user.findUnique as jest.Mock<any>).mockResolvedValue(null);
       (bcrypt.hash as jest.Mock<any>).mockResolvedValue("hashedPass");
       (prisma.user.create as jest.Mock<any>).mockResolvedValue({
         id: 1,
         email: "test@example.com",
         role: "user",
+        tokenVersion: 0,
       });
-      (signToken as jest.Mock<any>).mockReturnValue("jwt.token.here");
+      (generateTokens as jest.Mock<any>).mockReturnValue(mockTokens);
+      (prisma.user.update as jest.Mock<any>).mockResolvedValue({ id: 1 });
 
       const result = await authService.register({
         email: "test@example.com",
@@ -66,13 +75,24 @@ describe("AuthService", () => {
           password: "hashedPass",
           name: "Test",
           role: "user",
+          tokenVersion: 0,
         },
-        select: { id: true, email: true, role: true },
+        select: { id: true, email: true, role: true, tokenVersion: true },
       });
-      expect(signToken).toHaveBeenCalledWith({ userId: 1, role: "user" });
+      expect(generateTokens).toHaveBeenCalledWith({
+        userId: 1,
+        role: "user",
+        email: "test@example.com",
+        tokenVersion: 0,
+      });
+      expect(prisma.user.update).toHaveBeenCalledWith({
+        where: { id: 1 },
+        data: { refreshToken: mockTokens.refreshToken },
+      });
       expect(result).toEqual({
         user: { id: 1, email: "test@example.com", role: "user" },
-        token: "jwt.token.here",
+        accessToken: mockTokens.accessToken,
+        refreshToken: mockTokens.refreshToken,
       });
     });
   });
@@ -96,15 +116,22 @@ describe("AuthService", () => {
       ).rejects.toThrow("Invalid credentials");
     });
 
-    it("should return token/user on valid credentials", async () => {
+    it("should return tokens/user on valid credentials", async () => {
+      const mockTokens = {
+        accessToken: "access.token.here",
+        refreshToken: "refresh.token.here",
+      };
+
       (prisma.user.findUnique as jest.Mock<any>).mockResolvedValue({
         id: 1,
         email: "test@example.com",
         password: "hashedPass",
         role: "user",
+        tokenVersion: 0,
       });
       (bcrypt.compare as jest.Mock<any>).mockResolvedValue(true);
-      (signToken as jest.Mock<any>).mockReturnValue("jwt.token.here");
+      (generateTokens as jest.Mock<any>).mockReturnValue(mockTokens);
+      (prisma.user.update as jest.Mock<any>).mockResolvedValue({ id: 1 });
 
       const result = await authService.login({
         email: "test@example.com",
@@ -112,10 +139,100 @@ describe("AuthService", () => {
       });
 
       expect(bcrypt.compare).toHaveBeenCalledWith("pass123", "hashedPass");
-      expect(signToken).toHaveBeenCalledWith({ userId: 1, role: "user" });
+      expect(generateTokens).toHaveBeenCalledWith({
+        userId: 1,
+        role: "user",
+        email: "test@example.com",
+        tokenVersion: 0,
+      });
+      expect(prisma.user.update).toHaveBeenCalledWith({
+        where: { id: 1 },
+        data: { refreshToken: mockTokens.refreshToken },
+      });
       expect(result).toEqual({
         user: { id: 1, email: "test@example.com", role: "user" },
-        token: "jwt.token.here",
+        accessToken: mockTokens.accessToken,
+        refreshToken: mockTokens.refreshToken,
+      });
+    });
+  });
+
+  describe("refreshToken", () => {
+    it("should throw error if token is invalid", async () => {
+      (verifyRefreshToken as jest.Mock<any>).mockImplementation(() => {
+        throw new Error();
+      });
+      await expect(authService.refreshToken("invalid.token")).rejects.toThrow(
+        "Invalid refresh token"
+      );
+    });
+
+    it("should throw error if user not found", async () => {
+      (verifyRefreshToken as jest.Mock<any>).mockReturnValue({
+        userId: 1,
+        tokenVersion: 0,
+      });
+      (prisma.user.findUnique as jest.Mock<any>).mockResolvedValue(null);
+      await expect(authService.refreshToken("valid.token")).rejects.toThrow(
+        "User not found"
+      );
+    });
+
+    it("should throw error if token versions don't match", async () => {
+      (verifyRefreshToken as jest.Mock<any>).mockReturnValue({
+        userId: 1,
+        tokenVersion: 0,
+      });
+      (prisma.user.findUnique as jest.Mock<any>).mockResolvedValue({
+        id: 1,
+        tokenVersion: 1,
+        refreshToken: "valid.token",
+      });
+      await expect(authService.refreshToken("valid.token")).rejects.toThrow(
+        "Token has been revoked"
+      );
+    });
+
+    it("should return new access token on success", async () => {
+      const mockTokens = {
+        accessToken: "new.access.token",
+        refreshToken: "refresh.token",
+      };
+
+      (verifyRefreshToken as jest.Mock<any>).mockReturnValue({
+        userId: 1,
+        tokenVersion: 0,
+      });
+      (prisma.user.findUnique as jest.Mock<any>).mockResolvedValue({
+        id: 1,
+        email: "test@example.com",
+        role: "user",
+        tokenVersion: 0,
+        refreshToken: "valid.token",
+      });
+      (generateTokens as jest.Mock<any>).mockReturnValue(mockTokens);
+
+      const result = await authService.refreshToken("valid.token");
+      expect(result).toEqual({ accessToken: mockTokens.accessToken });
+    });
+  });
+
+  describe("revokeRefreshTokens", () => {
+    it("should increment token version and clear refresh token", async () => {
+      (prisma.user.update as jest.Mock<any>).mockResolvedValue({
+        id: 1,
+        tokenVersion: 1,
+        refreshToken: null,
+      });
+
+      const result = await authService.revokeRefreshTokens(1);
+      expect(result).toBe(true);
+      expect(prisma.user.update).toHaveBeenCalledWith({
+        where: { id: 1 },
+        data: {
+          tokenVersion: { increment: 1 },
+          refreshToken: null,
+        },
       });
     });
   });

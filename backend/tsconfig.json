@@ -1,13 +1,13 @@
 {
   "compilerOptions": {
     "target": "ES2020",
-    "module": "ESNext",  // Changed from "CommonJS" to enable ESM output
+    "module": "ESNext", // Changed from "CommonJS" to enable ESM output
     "moduleResolution": "node",
     "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,  // Helps with CommonJS interop
+    "allowSyntheticDefaultImports": true, // Helps with CommonJS interop
     "strict": true,
     "outDir": "dist",
-    "rootDir": "src"
+    "rootDir": "."
   },
-  "include": ["src","tests"],
+  "include": ["src", "tests"]
 }
