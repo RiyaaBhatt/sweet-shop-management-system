@@ -67,11 +67,6 @@ The repository has two main folders: `backend/` and `frontend/`.
 
 Notes: the frontend expects the backend API at `http://localhost:8000/api`. If you change the backend port, update `frontend/src/api/config.ts`.
 
-## Order management (what's included)
-
-- Backend: Order and OrderItem models (Prisma), endpoints to create orders (`POST /api/orders`), list user orders (`GET /api/orders`), get order by id (`GET /api/orders/:id`), admin order listing (`GET /api/admin/orders`), update status (`PUT /api/admin/orders/:id/status`), and reporting (`/api/admin/stats`, `/api/admin/reports/top-products`, `/api/admin/reports/sales-by-day`).
-- Frontend: Checkout flow (collect delivery details), My Orders page (`/orders`), and Admin dashboard with basic order management UI.
-
 ## Running tests and coverage
 
 ### Backend
