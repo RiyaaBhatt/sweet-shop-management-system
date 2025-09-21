@@ -49,13 +49,13 @@ const Contact: React.FC = () => {
     {
       icon: <MapPin className="h-6 w-6" />,
       title: 'Visit Our Store',
-      details: ['123 Sweet Street', 'Confectionery District', 'Mumbai 400001'],
+      details: ['123 Sweet Street',  'Ahmadabad, Gujarat, India'],
       color: 'text-sweet-gold',
     },
     {
       icon: <Phone className="h-6 w-6" />,
       title: 'Call Us',
-      details: ['+91 98765 43210', '+91 98765 43211', 'Toll Free: 1800-SWEETS'],
+      details: [ 'Toll Free: 1800-SWEETS'],
       color: 'text-sweet-mint',
     },
     {
@@ -281,23 +281,6 @@ const Contact: React.FC = () => {
           </SweetCard>
         </div>
 
-        {/* CTA Section */}
-        <div className="text-center bg-gradient-hero rounded-2xl p-8 text-white">
-          <h2 className="font-heading text-2xl md:text-3xl font-bold mb-4">
-            Still Have Questions?
-          </h2>
-          <p className="text-lg opacity-90 mb-6">
-            Our customer support team is always ready to help you
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button variant="cream" size="lg">
-              Call Now: +91 98765 43210
-            </Button>
-            <Button variant="outline" size="lg" className="border-white text-white hover:bg-white hover:text-primary">
-              Live Chat Support
-            </Button>
-          </div>
-        </div>
       </div>
     </div>
   );

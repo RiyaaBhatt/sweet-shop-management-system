@@ -18,6 +18,9 @@ export class SweetController {
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 10;
       const search = req.query.search as string;
+      // Support legacy 'query' param used by tests
+      const queryParam = req.query.query as string;
+      const searchTerm = search ?? queryParam;
       const category = req.query.category as string;
       const sortBy = req.query.sortBy as string;
       const sortOrder = req.query.sortOrder as "asc" | "desc";
@@ -25,14 +28,22 @@ export class SweetController {
       const result = await this.sweetService.getAllSweets({
         page,
         limit,
-        search,
+        search: searchTerm,
         category,
         sortBy,
         sortOrder,
         query: "",
       });
 
-      res.json(result);
+      // normalize items image -> imageUrl
+      const normalized = {
+        items: result.items.map((i: any) => ({
+          ...i,
+          imageUrl: i.image ?? null,
+        })),
+        meta: result.meta,
+      };
+      res.json(normalized);
     } catch (error) {
       next(error);
     }
@@ -63,7 +74,7 @@ export class SweetController {
       // Pick only allowed fields to avoid passing unexpected keys (like stock)
       const sweetData: any = {
         name: body.name,
-        description: body.description,
+        description: body.description ?? "",
         category: body.category,
         price: parsedPrice,
         quantity: parsedQuantity,
@@ -77,7 +88,12 @@ export class SweetController {
         sweetData.sugarFree =
           body.sugarFree === "true" || body.sugarFree === true;
       const sweet = await this.sweetService.createSweet(sweetData);
-      res.status(201).json(sweet);
+      // normalize to imageUrl for client expectations
+      const img = (sweet as any).image
+        ? `/uploads/${String((sweet as any).image).replace(/^\//, "")}`
+        : null;
+      const resp = { ...sweet, imageUrl: img };
+      res.status(201).json(resp);
     } catch (error) {
       next(error);
     }
@@ -126,7 +142,7 @@ export class SweetController {
 
       const sweetData: any = {
         name: body.name,
-        description: body.description,
+        description: body.description ?? "",
         category: body.category,
         price: parsedPrice,
         quantity: parsedQuantity,
@@ -140,7 +156,11 @@ export class SweetController {
         sweetData.sugarFree =
           body.sugarFree === "true" || body.sugarFree === true;
       const sweet = await this.sweetService.updateSweet(id, sweetData);
-      res.json(sweet);
+      const imgUpd = (sweet as any).image
+        ? `/uploads/${String((sweet as any).image).replace(/^\//, "")}`
+        : null;
+      const respUpd = { ...sweet, imageUrl: imgUpd };
+      res.json(respUpd);
     } catch (error) {
       next(error);
     }
@@ -181,6 +201,16 @@ export class SweetController {
       );
       res.json(result);
     } catch (error) {
+      // Map known errors to proper status codes
+      const msg = (error as any)?.message ?? "Internal error";
+      if (
+        msg.includes("Insufficient") ||
+        msg.includes("greater than 0") ||
+        msg.includes("not found")
+      ) {
+        res.status(400).json({ message: msg });
+        return;
+      }
       next(error);
     }
   };

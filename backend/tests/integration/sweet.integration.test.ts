@@ -51,12 +51,18 @@ describe("Sweet API Integration Tests", () => {
   beforeEach(async () => {
     // Clean up existing data
     await prisma.transaction.deleteMany();
+    // deleteOrders/orderItems if prisma has them
+    // @ts-ignore (may not exist depending on schema state in environment)
+    if ((prisma as any).orderItem) await (prisma as any).orderItem.deleteMany();
+    // @ts-ignore
+    if ((prisma as any).order) await (prisma as any).order.deleteMany();
     await prisma.sweet.deleteMany();
 
     // Create a test sweet
     testSweet = await prisma.sweet.create({
       data: {
         name: "Test Sweet",
+        description: "A tasty test sweet",
         category: "Test Category",
         price: 50.0,
         quantity: 100,
@@ -67,6 +73,10 @@ describe("Sweet API Integration Tests", () => {
   afterAll(async () => {
     // Clean up all test data
     await prisma.transaction.deleteMany();
+    // @ts-ignore
+    if ((prisma as any).orderItem) await (prisma as any).orderItem.deleteMany();
+    // @ts-ignore
+    if ((prisma as any).order) await (prisma as any).order.deleteMany();
     await prisma.sweet.deleteMany();
     await prisma.user.deleteMany();
 
@@ -286,12 +296,14 @@ describe("Sweet API Integration Tests", () => {
         data: [
           {
             name: "Test Sweet 1",
+            description: "Test sweet 1",
             category: "Test Category",
             price: 50.0,
             quantity: 100,
           },
           {
             name: "Another Sweet",
+            description: "Another sweet",
             category: "Other Category",
             price: 30.0,
             quantity: 50,

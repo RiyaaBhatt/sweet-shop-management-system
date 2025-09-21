@@ -7,6 +7,7 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "test": "jest --config jest.config.mjs --runInBand",
+    "coverage": "jest --config jest.config.mjs --coverage --runInBand",
     "seed": "tsx prisma/seed.ts"
   },
   "keywords": [],

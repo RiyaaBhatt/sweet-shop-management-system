@@ -47,7 +47,7 @@ const Register: React.FC = () => {
       })).unwrap();
       
       dispatch(addToast({
-        message: `Welcome to Sweet Delights, ${result.user.name}!`,
+        message: `Welcome to Sweet Delights !`,
         type: 'success',
       }));
       navigate('/');

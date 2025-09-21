@@ -7,8 +7,11 @@ import {
   setSearchQuery,
   setSelectedCategory,
   setSortBy,
+  purchaseSweet,
 } from "@/store/slices/productsSlice";
 import { addToCart } from "@/store/slices/cartSlice";
+import { cartApi } from "@/api/cart";
+import { decrementStock } from "@/store/slices/productsSlice";
 import { addToast } from "@/store/slices/uiSlice";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,8 +31,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Sweet } from "@/api/sweets";
-import { purchaseSweet } from "@/store/slices/productsSlice";
-import Noiamge from "../assets/traditional-sweets.jpg";
+import Noimage from "../assets/traditional-sweets.jpg";
+
 const CATEGORIES = ["All", "Traditional Sweets", "Dry Fruits", "Sugar-Free"];
 const SORT_OPTIONS = [
   { label: "Name A-Z", value: "name:asc" },
@@ -53,13 +56,14 @@ const Products = () => {
   const { user } = useAppSelector((state) => state.auth);
 
   const [page, setPage] = useState(1);
+  const [quantities, setQuantities] = useState<{ [key: number]: number }>({});
 
   useEffect(() => {
     const [field, order] = sortBy ? sortBy.split(":") : [undefined, undefined];
     dispatch(
       fetchProducts({
         search: searchQuery,
-        category: selectedCategory === "All" ? undefined : selectedCategory,
+        category: selectedCategory === "ALL" ? undefined : selectedCategory,
         sortBy: field,
         sortOrder: order as "asc" | "desc" | undefined,
         page,
@@ -67,7 +71,7 @@ const Products = () => {
     );
   }, [dispatch, searchQuery, selectedCategory, sortBy, page]);
 
-  // stable debounced callback using ref to avoid recreating on every render
+  // stable debounced callback
   const debouncedRef = React.useRef(
     debounce((query: string) => {
       dispatch(setSearchQuery(query));
@@ -102,42 +106,96 @@ const Products = () => {
     [dispatch]
   );
 
-  const handleAddToCart = useCallback(
-    (sweet: Sweet) => {
-      dispatch(
-        addToCart({
-          id: sweet.id.toString(),
-          name: sweet.name,
-          price: sweet.price,
-          image: sweet.image || Noiamge,
-        })
-      );
+  const handleQuantityChange = (id: number, value: number, max: number) => {
+    if (value < 1) value = 1;
+    if (value > max) value = max;
+    setQuantities((prev) => ({ ...prev, [id]: value }));
+  };
 
-      dispatch(
-        addToast({
-          message: `product has been added to your cart.`,
-          type: "success",
-        })
-      );
+  const handleAddToCart = useCallback(
+    async (sweet: Sweet) => {
+      const qty = quantities[sweet.id] || 1;
+      if (qty > sweet.quantity) {
+        dispatch(
+          addToast({
+            message: `Only ${sweet.quantity} items available in stock.`,
+            type: "error",
+          })
+        );
+        return;
+      }
+
+      try {
+        // Reserve stock on backend
+        const res = await cartApi.reserve(sweet.id, qty);
+        if (res.status === 200) {
+          // Optimistically update product stock in UI
+          dispatch(decrementStock({ id: sweet.id, qty }));
+
+          dispatch(
+            addToCart({
+              id: sweet.id.toString(),
+              name: sweet.name,
+              price: sweet.price,
+              image: sweet.image || Noimage,
+              quantity: qty,
+            })
+          );
+
+          dispatch(
+            addToast({
+              message: `Product has been added to your cart.`,
+              type: "success",
+            })
+          );
+        }
+      } catch (err: unknown) {
+        type ErrWithResp = { response?: { data?: { available?: number } } };
+        const e = err as ErrWithResp;
+        const avail = e.response?.data?.available;
+        if (avail !== undefined) {
+          dispatch(
+            addToast({
+              message: `Only ${avail} items available in stock.`,
+              type: "error",
+            })
+          );
+        } else {
+          dispatch(
+            addToast({ message: `Failed to add to cart.`, type: "error" })
+          );
+        }
+      }
     },
-    [dispatch]
+    [dispatch, quantities]
   );
 
   const handlePurchase = useCallback(
-    async (id: number) => {
+    async (sweet: Sweet) => {
+      const qty = quantities[sweet.id] || 1;
+      if (qty > sweet.quantity) {
+        dispatch(
+          addToast({
+            message: `Only ${sweet.quantity} items available in stock.`,
+            type: "error",
+          })
+        );
+        return;
+      }
+
       try {
-        await dispatch(purchaseSweet({ id, quantity: 1 })).unwrap();
+        await dispatch(purchaseSweet({ id: sweet.id, quantity: qty })).unwrap();
         dispatch(addToast({ message: "Purchase successful", type: "success" }));
       } catch (err) {
         dispatch(
           addToast({
-            message: "Purchase due to insuffient quantity",
+            message: "Purchase failed due to insufficient quantity",
             type: "error",
           })
         );
       }
     },
-    [dispatch]
+    [dispatch, quantities]
   );
 
   if (error) {
@@ -150,6 +208,7 @@ const Products = () => {
 
   return (
     <div className="container mx-auto p-4">
+      {/* Search + Filters */}
       <div className="flex flex-col md:flex-row gap-4 mb-6">
         <div className="flex-1">
           <div className="relative">
@@ -169,7 +228,10 @@ const Products = () => {
             </SelectTrigger>
             <SelectContent>
               {CATEGORIES.map((category) => (
-                <SelectItem key={category} value={category}>
+                <SelectItem
+                  key={category}
+                  value={category === "All" ? "ALL" : category}
+                >
                   {category}
                 </SelectItem>
               ))}
@@ -190,6 +252,7 @@ const Products = () => {
         </div>
       </div>
 
+      {/* Loader */}
       {isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {Array.from({ length: 8 }).map((_, index) => (
@@ -202,18 +265,18 @@ const Products = () => {
             </Card>
           ))}
         </div>
+      ) : items.length === 0 ? (
+        // No products state
+        <div className="text-center py-12 text-muted-foreground">
+          <p className="text-lg font-medium">No products found</p>
+          <p className="text-sm">Try adjusting your search or filters</p>
+        </div>
       ) : (
         <>
+          {/* Products grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {items.map((sweet) => (
               <Card key={sweet.id}>
-                {/* <img
-                  src={
-                    sweet.image ? `../assets/${sweet.image}` : Noiamge
-                  }
-                  alt={sweet.name}
-                  className="w-full h-48 object-cover rounded-t-lg"
-                /> */}
                 <CardHeader>
                   <CardTitle>{sweet.name}</CardTitle>
                   <CardDescription>{sweet.description}</CardDescription>
@@ -236,38 +299,47 @@ const Products = () => {
                   </div>
                 </CardContent>
                 <CardFooter>
-                  <div className="flex gap-2 w-full">
-                    {user?.role !== "admin" ? (
-                      <>
-                      <div>Quantity Available {sweet.quantity}</div>
-                      <Button
-                        className="flex-1"
-                        onClick={() => handleAddToCart(sweet)}
-                        disabled={sweet.quantity < 1}
-                      >
-                        <ShoppingCart className="w-4 h-4 mr-2" />
-                        {sweet.quantity > 1 ? "Add to Cart" : "Out of Stock"}
-                      </Button>
-                      <Button
-                        variant="outline"
-                        className="w-28"
-                        onClick={() => handlePurchase(sweet.id)}
-                        disabled={sweet.quantity < 1}
-                      >
-                        Buy
-                      </Button>
-                      </>
-                    ) : (
+                  {user?.role !== "admin" ? (
+                    <div className="flex flex-col gap-2 w-full">
                       <div className="text-sm text-muted-foreground">
-                        Admin view
+                        Quantity Available: {sweet.quantity}
                       </div>
-                    )}
-                  </div>
+                      <div className="flex gap-2 items-center">
+                        <Input
+                          type="number"
+                          min={1}
+                          max={sweet.quantity}
+                          value={quantities[sweet.id] || 1}
+                          onChange={(e) =>
+                            handleQuantityChange(
+                              sweet.id,
+                              parseInt(e.target.value, 10),
+                              sweet.quantity
+                            )
+                          }
+                          className="w-20"
+                        />
+                        <Button
+                          className="flex-1"
+                          onClick={() => handleAddToCart(sweet)}
+                          disabled={sweet.quantity < 1}
+                        >
+                          <ShoppingCart className="w-4 h-4 mr-2" />
+                          {sweet.quantity > 0 ? "Add to Cart" : "Out of Stock"}
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-sm text-muted-foreground">
+                      Admin view
+                    </div>
+                  )}
                 </CardFooter>
               </Card>
             ))}
           </div>
 
+          {/* Pagination */}
           {meta && meta.totalPages > 1 && (
             <div className="flex justify-center mt-6 gap-2">
               <Button

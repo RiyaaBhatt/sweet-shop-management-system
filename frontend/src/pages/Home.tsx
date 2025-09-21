@@ -1,18 +1,26 @@
-import React, { useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { ArrowRight, Star, Gift, Truck, Shield, Heart } from 'lucide-react';
-import { useAppDispatch, useAppSelector } from '@/hooks/redux';
-import { fetchProducts } from '@/store/slices/productsSlice';
-import { Button } from '@/components/ui/button';
-import { SweetCard, SweetCardContent, SweetCardHeader, SweetCardTitle, SweetCardDescription } from '@/components/ui/sweet-card';
-import heroImage from '@/assets/hero-sweets.jpg';
-import traditionalImage from '@/assets/traditional-sweets.jpg';
-import sugarFreeImage from '@/assets/sugar-free-sweets.jpg';
-import dryFruitsImage from '@/assets/dry-fruits.jpg';
+import React, { useEffect } from "react";
+import { Link } from "react-router-dom";
+import { ArrowRight, Star, Gift, Truck, Shield, Heart } from "lucide-react";
+import { useAppDispatch, useAppSelector } from "@/hooks/redux";
+import { fetchProducts } from "@/store/slices/productsSlice";
+import { Button } from "@/components/ui/button";
+import {
+  SweetCard,
+  SweetCardContent,
+  SweetCardHeader,
+  SweetCardTitle,
+  SweetCardDescription,
+} from "@/components/ui/sweet-card";
+import heroImage from "@/assets/hero-sweets.jpg";
+import traditionalImage from "@/assets/traditional-sweets.jpg";
+import sugarFreeImage from "@/assets/sugar-free-sweets.jpg";
+import dryFruitsImage from "@/assets/dry-fruits.jpg";
 
 const Home: React.FC = () => {
   const dispatch = useAppDispatch();
-  const { items: products, isLoading } = useAppSelector((state) => state.products);
+  const { items: products, isLoading } = useAppSelector(
+    (state) => state.products
+  );
 
   useEffect(() => {
     dispatch(fetchProducts());
@@ -20,61 +28,63 @@ const Home: React.FC = () => {
 
   const categories = [
     {
-      name: 'Traditional Sweets',
-      description: 'Authentic recipes passed down through generations',
+      name: "Traditional Sweets",
+      description: "Authentic recipes passed down through generations",
       image: traditionalImage,
-      color: 'bg-sweet-gold',
+      color: "bg-sweet-gold",
     },
     {
-      name: 'Sugar-Free',
-      description: 'Delicious treats without compromising on taste',
+      name: "Sugar-Free",
+      description: "Delicious treats without compromising on taste",
       image: sugarFreeImage,
-      color: 'bg-sweet-mint',
+      color: "bg-sweet-mint",
     },
     {
-      name: 'Dry Fruits',
-      description: 'Premium nuts and dried fruits collection',
+      name: "Dry Fruits",
+      description: "Premium nuts and dried fruits collection",
       image: dryFruitsImage,
-      color: 'bg-sweet-pink',
+      color: "bg-sweet-pink",
     },
     {
-      name: 'Cakes',
-      description: 'Fresh baked cakes for every celebration',
+      name: "Cakes",
+      description: "Fresh baked cakes for every celebration",
       image: traditionalImage,
-      color: 'bg-sweet-cream',
+      color: "bg-sweet-cream",
     },
   ];
 
   const features = [
     {
       icon: <Gift className="h-8 w-8 text-primary" />,
-      title: 'Gift Wrapping',
-      description: 'Beautiful packaging for your special moments',
+      title: "Gift Wrapping",
+      description: "Beautiful packaging for your special moments",
     },
     {
       icon: <Truck className="h-8 w-8 text-primary" />,
-      title: 'Fast Delivery',
-      description: 'Fresh sweets delivered to your doorstep',
+      title: "Fast Delivery",
+      description: "Fresh sweets delivered to your doorstep",
     },
     {
       icon: <Shield className="h-8 w-8 text-primary" />,
-      title: 'Quality Assured',
-      description: 'Premium ingredients and traditional methods',
+      title: "Quality Assured",
+      description: "Premium ingredients and traditional methods",
     },
     {
       icon: <Heart className="h-8 w-8 text-primary" />,
-      title: 'Made with Love',
-      description: 'Every sweet crafted with care and passion',
+      title: "Made with Love",
+      description: "Every sweet crafted with care and passion",
     },
   ];
 
-  const featuredProducts = products.filter(product => product.featured).slice(0, 3);
+  const featuredProducts = products
+    .filter((product) => product.featured)
+    .slice(0, 3);
 
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
       <section className="relative py-20 lg:py-32 overflow-hidden">
-        <div 
+        <div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
           style={{ backgroundImage: `url(${heroImage})` }}
         >
@@ -87,8 +97,9 @@ const Home: React.FC = () => {
               <span className="block text-primary-glow mt-2">Await You</span>
             </h1>
             <p className="text-lg md:text-xl text-white/90 mb-8 max-w-2xl mx-auto animate-fade-in drop-shadow-md">
-              Discover the finest collection of traditional Indian sweets, sugar-free options, 
-              and premium confectionery. Made fresh daily with authentic recipes and premium ingredients.
+              Discover the finest collection of traditional Indian sweets,
+              sugar-free options, and premium confectionery. Made fresh daily
+              with authentic recipes and premium ingredients.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in">
               <Button variant="hero" size="xl" asChild>
@@ -96,7 +107,6 @@ const Home: React.FC = () => {
                   Shop Now <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
               </Button>
-            
             </div>
           </div>
         </div>
@@ -110,20 +120,27 @@ const Home: React.FC = () => {
               Our Sweet Categories
             </h2>
             <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              From traditional favorites to modern healthy options, we have something for every sweet tooth
+              From traditional favorites to modern healthy options, we have
+              something for every sweet tooth
             </p>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {categories.map((category, index) => (
               <SweetCard key={category.name} variant="hover" className="group">
                 <SweetCardContent className="p-6">
-                  <div className={`w-16 h-16 rounded-full ${category.color} flex items-center justify-center mb-4 mx-auto group-hover:scale-110 transition-transform duration-300`}>
+                  <div
+                    className={`w-16 h-16 rounded-full ${category.color} flex items-center justify-center mb-4 mx-auto group-hover:scale-110 transition-transform duration-300`}
+                  >
                     <span className="text-2xl">🍯</span>
                   </div>
                   <SweetCardHeader className="text-center">
-                    <SweetCardTitle className="text-xl mb-2">{category.name}</SweetCardTitle>
-                    <SweetCardDescription>{category.description}</SweetCardDescription>
+                    <SweetCardTitle className="text-xl mb-2">
+                      {category.name}
+                    </SweetCardTitle>
+                    <SweetCardDescription>
+                      {category.description}
+                    </SweetCardDescription>
                   </SweetCardHeader>
                 </SweetCardContent>
               </SweetCard>
@@ -133,7 +150,7 @@ const Home: React.FC = () => {
       </section>
 
       {/* Featured Products */}
-   
+
       {/* Features Section */}
       <section className="py-16 bg-gradient-card">
         <div className="container mx-auto px-4">
@@ -142,17 +159,20 @@ const Home: React.FC = () => {
               Why Choose Sweet Delights?
             </h2>
             <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              We're committed to bringing you the finest sweets with exceptional service
+              We're committed to bringing you the finest sweets with exceptional
+              service
             </p>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {features.map((feature, index) => (
               <div key={index} className="text-center group">
                 <div className="mb-4 flex justify-center group-hover:scale-110 transition-transform duration-300">
                   {feature.icon}
                 </div>
-                <h3 className="font-heading text-xl font-semibold mb-2">{feature.title}</h3>
+                <h3 className="font-heading text-xl font-semibold mb-2">
+                  {feature.title}
+                </h3>
                 <p className="text-muted-foreground">{feature.description}</p>
               </div>
             ))}
@@ -167,13 +187,27 @@ const Home: React.FC = () => {
             Ready to Satisfy Your Sweet Cravings?
           </h2>
           <p className="text-lg mb-8 opacity-90 max-w-2xl mx-auto">
-            Join thousands of happy customers who trust us for their sweet celebrations
+            Join thousands of happy customers who trust us for their sweet
+            celebrations
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button variant="cream" size="xl" asChild>
+            <Button
+              variant="cream"
+              size="xl"
+              asChild
+              className="dark:bg-white dark:text-primary"
+            >
               <Link to="/products">Start Shopping</Link>
             </Button>
-            <Button variant="outline" size="xl" className="border-white text-white hover:bg-white hover:text-primary" asChild>
+            <Button
+              variant="outline"
+              size="xl"
+              asChild
+              className="
+      border-black text-black hover:bg-black hover:text-white
+      dark:border-white dark:text-white dark:hover:bg-white dark:hover:text-primary
+    "
+            >
               <Link to="/contact">Contact Us</Link>
             </Button>
           </div>

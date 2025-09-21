@@ -10,6 +10,9 @@ import type { CorsOptions } from "cors";
 import swaggerUi from "swagger-ui-express";
 import authRoutes from "./routes/auth.routes";
 import sweetRoutes from "./routes/sweet.routes";
+import orderRoutes from "./routes/order.routes";
+import cartRoutes from "./routes/cart.routes";
+import adminRoutes from "./routes/admin.routes";
 import dotenv from "dotenv";
 import { specs } from "./config/swagger";
 
@@ -92,5 +95,8 @@ app.use(
 // API Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/sweets", sweetRoutes);
+app.use("/api/orders", orderRoutes);
+app.use("/api/cart", cartRoutes);
+app.use("/api/admin", adminRoutes);
 
 export default app;

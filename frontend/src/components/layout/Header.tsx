@@ -46,34 +46,47 @@ const Header: React.FC = () => {
           </Link>
         </div>
 
-        {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center space-x-6 text-sm font-medium flex-1">
-          <Link
-            to="/"
-            className="transition-colors hover:text-primary text-muted-foreground hover:text-foreground"
-          >
-            Home
-          </Link>
-          <Link
-            to="/products"
-            className="transition-colors hover:text-primary text-muted-foreground hover:text-foreground"
-          >
-            Products
-          </Link>
+        {/* Desktop Navigation - hide full nav for admin users */}
+        {user?.role !== "admin" ? (
+          <nav className="hidden md:flex items-center space-x-6 text-sm font-medium flex-1">
+            <Link
+              to="/"
+              className="transition-colors hover:text-primary text-muted-foreground hover:text-foreground"
+            >
+              Home
+            </Link>
+            <Link
+              to="/products"
+              className="transition-colors hover:text-primary text-muted-foreground hover:text-foreground"
+            >
+              Products
+            </Link>
 
-          <Link
-            to="/about"
-            className="transition-colors hover:text-primary text-muted-foreground hover:text-foreground"
-          >
-            About
-          </Link>
-          <Link
-            to="/contact"
-            className="transition-colors hover:text-primary text-muted-foreground hover:text-foreground"
-          >
-            Contact
-          </Link>
-        </nav>
+            <Link
+              to="/about"
+              className="transition-colors hover:text-primary text-muted-foreground hover:text-foreground"
+            >
+              About
+            </Link>
+            {isAuthenticated && user?.role !== "admin" && (
+              <Link
+                to="/orders"
+                className="transition-colors text-muted-foreground hover:text-foreground"
+              >
+                My Orders
+              </Link>
+            )}
+            <Link
+              to="/contact"
+              className="transition-colors hover:text-primary text-muted-foreground hover:text-foreground"
+            >
+              Contact
+            </Link>
+          </nav>
+        ) : (
+          // keep spacing when admin so header layout doesn't jump
+          <div className="hidden md:block flex-1" />
+        )}
 
         {/* Actions */}
         <div className="flex items-center space-x-2">
@@ -118,19 +131,28 @@ const Header: React.FC = () => {
 
           {/* User Menu */}
           {isAuthenticated ? (
-            <div className="flex items-center space-x-2">
-              <span className="hidden sm:block text-sm text-muted-foreground">
-                Hello
-              </span>
-              <Button variant="ghost" size="sm" onClick={handleLogout}>
-                Logout
-              </Button>
-              {user?.role === "admin" && (
-                <Button variant="sweet" size="sm" asChild>
-                  <Link to="/admin">Admin Panel</Link>
+            user?.role === "admin" ? (
+              // For admin users show only logout (theme toggle already shown)
+              <div className="flex items-center space-x-2">
+                <Button variant="ghost" size="sm" onClick={handleLogout}>
+                  Logout
                 </Button>
-              )}
-            </div>
+              </div>
+            ) : (
+              <div className="flex items-center space-x-2">
+                <span className="hidden sm:block text-sm text-muted-foreground">
+                  Hello
+                </span>
+                <Button variant="ghost" size="sm" onClick={handleLogout}>
+                  Logout
+                </Button>
+                {user?.role === "admin" && (
+                  <Button variant="sweet" size="sm" asChild>
+                    <Link to="/admin">Admin Panel</Link>
+                  </Button>
+                )}
+              </div>
+            )
           ) : (
             <div className="hidden sm:flex items-center space-x-2">
               <Button variant="ghost" size="sm" asChild>
@@ -158,63 +180,104 @@ const Header: React.FC = () => {
       {mobileMenuOpen && (
         <div className="md:hidden border-t bg-background/95 backdrop-blur">
           <div className="container mx-auto px-4 py-4 space-y-3">
-            <nav className="flex flex-col space-y-3">
-              <Link
-                to="/"
-                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-                onClick={() => dispatch(toggleMobileMenu())}
-              >
-                Home
-              </Link>
-              <Link
-                to="/products"
-                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-                onClick={() => dispatch(toggleMobileMenu())}
-              >
-                Products
-              </Link>
-              <Link
-                to="/categories"
-                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-                onClick={() => dispatch(toggleMobileMenu())}
-              >
-                Categories
-              </Link>
-              <Link
-                to="/about"
-                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-                onClick={() => dispatch(toggleMobileMenu())}
-              >
-                About
-              </Link>
-              <Link
-                to="/contact"
-                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-                onClick={() => dispatch(toggleMobileMenu())}
-              >
-                Contact
-              </Link>
-            </nav>
-
-            {!isAuthenticated && (
+            {/* For admin users show only logout in mobile menu */}
+            {isAuthenticated && user?.role === "admin" ? (
               <div className="flex flex-col space-y-2 pt-3 border-t">
-                <Button variant="ghost" size="sm" asChild>
-                  <Link
-                    to="/login"
-                    onClick={() => dispatch(toggleMobileMenu())}
-                  >
-                    Login
-                  </Link>
-                </Button>
-                <Button variant="sweet" size="sm" asChild>
-                  <Link
-                    to="/register"
-                    onClick={() => dispatch(toggleMobileMenu())}
-                  >
-                    Sign Up
-                  </Link>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    dispatch(toggleMobileMenu());
+                    handleLogout();
+                  }}
+                >
+                  Logout
                 </Button>
               </div>
+            ) : (
+              <>
+                <nav className="flex flex-col space-y-3">
+                  <Link
+                    to="/"
+                    className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                    onClick={() => dispatch(toggleMobileMenu())}
+                  >
+                    Home
+                  </Link>
+                  <Link
+                    to="/products"
+                    className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                    onClick={() => dispatch(toggleMobileMenu())}
+                  >
+                    Products
+                  </Link>
+                  <Link
+                    to="/categories"
+                    className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                    onClick={() => dispatch(toggleMobileMenu())}
+                  >
+                    Categories
+                  </Link>
+                  <Link
+                    to="/about"
+                    className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                    onClick={() => dispatch(toggleMobileMenu())}
+                  >
+                    About
+                  </Link>
+                  <Link
+                    to="/contact"
+                    className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                    onClick={() => dispatch(toggleMobileMenu())}
+                  >
+                    Contact
+                  </Link>
+                </nav>
+
+                {!isAuthenticated && (
+                  <div className="flex flex-col space-y-2 pt-3 border-t">
+                    <Button variant="ghost" size="sm" asChild>
+                      <Link
+                        to="/login"
+                        onClick={() => dispatch(toggleMobileMenu())}
+                      >
+                        Login
+                      </Link>
+                    </Button>
+                    <Button variant="sweet" size="sm" asChild>
+                      <Link
+                        to="/register"
+                        onClick={() => dispatch(toggleMobileMenu())}
+                      >
+                        Sign Up
+                      </Link>
+                    </Button>
+                  </div>
+                )}
+                {isAuthenticated && (
+                  <div className="flex flex-col space-y-2 pt-3 border-t">
+                    {user?.role !== "admin" ? (
+                      <Button variant="ghost" size="sm" asChild>
+                        <Link
+                          to="/orders"
+                          onClick={() => dispatch(toggleMobileMenu())}
+                        >
+                          My Orders
+                        </Link>
+                      </Button>
+                    ) : (
+                      <Button variant="ghost" size="sm" asChild>
+                        <Link
+                          to="/admin"
+                          onClick={() => dispatch(toggleMobileMenu())}
+                        >
+                          Admin Panel
+                        </Link>
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>

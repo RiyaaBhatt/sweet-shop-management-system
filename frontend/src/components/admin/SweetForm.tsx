@@ -29,7 +29,6 @@ const sweetFormSchema = z.object({
   description: z.string().min(1, "Please enter a description"),
   price: z.number().min(0.01, "Price must be greater than 0"),
   quantity: z.number().int().min(0, "Quantity must be 0 or greater"),
-  imageUrl: z.string().nullable().optional(),
 });
 
 type SweetFormData = z.infer<typeof sweetFormSchema>;
@@ -75,7 +74,7 @@ const SweetForm: React.FC<SweetFormProps> = ({
           description: sweet.description || "",
           price: sweet.price,
           quantity: sweet.stock ?? sweet.quantity ?? 0,
-          imageUrl: sweet.imageUrl ?? null,
+          // image is optional / removed from admin form
         }
       : {
           name: "",
@@ -83,7 +82,7 @@ const SweetForm: React.FC<SweetFormProps> = ({
           description: "",
           price: 0,
           quantity: 0,
-          imageUrl: null,
+          // image removed
         },
   });
 
@@ -271,32 +270,7 @@ const SweetForm: React.FC<SweetFormProps> = ({
                 )}
               </div>
 
-              {/* Image URL */}
-              <div>
-                <Label htmlFor="imageUrl" className="text-sm font-medium">
-                  Image URL
-                </Label>
-                <div className="mt-1 space-y-2">
-                  <Input
-                    id="imageUrl"
-                    {...register("imageUrl")}
-                    placeholder="https://example.com/image.jpg"
-                  />
-                  <div className="flex items-center justify-center w-full h-32 border-2 border-dashed border-muted-foreground/25 rounded-lg">
-                    <div className="text-center">
-                      <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-                      <p className="text-sm text-muted-foreground">
-                        Image upload will be available with full API integration
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                {errors.imageUrl && (
-                  <p className="mt-1 text-sm text-destructive">
-                    {errors.imageUrl.message}
-                  </p>
-                )}
-              </div>
+              {/* Image removed from admin form per requirement */}
 
               {/* Error Message */}
               {error && <ErrorMessage message={error} className="mb-4" />}

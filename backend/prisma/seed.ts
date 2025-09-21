@@ -52,8 +52,28 @@ async function copyImage(
 }
 
 async function main() {
-  // First, clean up existing data
-  await prisma.sweet.deleteMany();
+  // First, clean up existing data in dependency-safe order
+  // Delete order items, orders, transactions before sweets to avoid FK constraint errors
+  try {
+    await prisma.orderItem.deleteMany();
+  } catch (e) {
+    // ignore if model/table doesn't exist yet
+  }
+  try {
+    await prisma.order.deleteMany();
+  } catch (e) {
+    // ignore
+  }
+  try {
+    await prisma.transaction.deleteMany();
+  } catch (e) {
+    // ignore
+  }
+  try {
+    await prisma.sweet.deleteMany();
+  } catch (e) {
+    // ignore
+  }
 
   // Define image paths - go up from prisma to backend, then to frontend
   const imageFiles = {
@@ -63,18 +83,6 @@ async function main() {
   };
 
   // Copy images to uploads directory
-  const traditionalImage = await copyImage(
-    join(__dirname, imageFiles.traditional),
-    "traditional-sweets.jpg"
-  );
-  const sugarFreeImage = await copyImage(
-    join(__dirname, imageFiles.sugarFree),
-    "sugar-free-sweets.jpg"
-  );
-  const dryFruitsImage = await copyImage(
-    join(__dirname, imageFiles.dryFruits),
-    "dry-fruits.jpg"
-  );
 
   // Create seed data
   const sweets = [
@@ -87,7 +95,7 @@ async function main() {
       category: "Traditional Sweets",
       quantity: 50,
       isAvailable: true,
-      image: traditionalImage,
+
       featured: true,
     },
     {
@@ -97,7 +105,6 @@ async function main() {
       category: "Traditional Sweets",
       quantity: 40,
       isAvailable: true,
-      image: traditionalImage,
     },
     {
       name: "Kaju Katli",
@@ -106,7 +113,6 @@ async function main() {
       category: "Traditional Sweets",
       quantity: 30,
       isAvailable: true,
-      image: traditionalImage,
       featured: true,
     },
 
@@ -118,7 +124,6 @@ async function main() {
       category: "Sugar-Free",
       quantity: 25,
       isAvailable: true,
-      image: sugarFreeImage,
       sugarFree: true,
     },
     {
@@ -129,7 +134,6 @@ async function main() {
       category: "Sugar-Free",
       quantity: 20,
       isAvailable: true,
-      image: sugarFreeImage,
       sugarFree: true,
       featured: true,
     },
@@ -140,7 +144,6 @@ async function main() {
       category: "Sugar-Free",
       quantity: 15,
       isAvailable: true,
-      image: sugarFreeImage,
       sugarFree: true,
     },
 
@@ -152,7 +155,6 @@ async function main() {
       category: "Dry Fruits",
       quantity: 35,
       isAvailable: true,
-      image: dryFruitsImage,
     },
     {
       name: "Dry Fruit Ladoo",
@@ -161,7 +163,6 @@ async function main() {
       category: "Dry Fruits",
       quantity: 30,
       isAvailable: true,
-      image: dryFruitsImage,
       featured: true,
     },
     {
@@ -171,7 +172,6 @@ async function main() {
       category: "Dry Fruits",
       quantity: 20,
       isAvailable: true,
-      image: dryFruitsImage,
     },
   ];
 
@@ -184,6 +184,59 @@ async function main() {
 
   // Create admin user
   await createAdminUser();
+
+  // Create a test customer user for orders
+  let customer;
+  try {
+    const hashed = await bcrypt.hash("test123", 10);
+    customer = await prisma.user.upsert({
+      where: { email: "customer@example.com" },
+      update: {},
+      create: {
+        email: "customer@example.com",
+        name: "Test Customer",
+        password: hashed,
+        role: "user",
+      },
+    });
+    console.log("Test customer created:", customer.email);
+  } catch (err) {
+    console.error("Error creating test customer:", err);
+  }
+
+  // Create a sample order for the customer using the first two sweets
+  try {
+    const availableSweets = await prisma.sweet.findMany({ take: 2 });
+    if (customer && availableSweets.length > 0) {
+      const orderTotal = availableSweets.reduce(
+        (sum, s) => sum + s.price * 2,
+        0
+      );
+      const order = await prisma.order.create({
+        data: {
+          userId: customer.id,
+          total: orderTotal,
+          status: "pending",
+          recipientName: "John Doe",
+          deliveryAddress: "123 Test St, City",
+          phoneNumber: "1234567890",
+          notes: "Please deliver between 9-11am",
+          items: {
+            create: availableSweets.map((s) => ({
+              productId: s.id,
+              quantity: 2,
+              price: s.price,
+            })),
+          },
+        },
+        include: { items: true },
+      });
+
+      console.log("Sample order created with id:", order.id);
+    }
+  } catch (err) {
+    console.error("Error creating sample order:", err);
+  }
 
   console.log("🍯 Seed data has been inserted successfully!");
 }

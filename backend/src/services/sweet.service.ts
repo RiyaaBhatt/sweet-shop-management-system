@@ -20,6 +20,8 @@ type TransactionPrisma = Omit<
 interface CreateSweetDto {
   /** The name of the sweet item */
   name: string;
+  /** Short description of the sweet */
+  description: string;
   /** The category of the sweet (e.g., chocolate, candy, etc.) */
   category: string;
   /** The price of the sweet item */
@@ -35,6 +37,7 @@ interface CreateSweetDto {
 interface UpdateSweetDto {
   /** The updated name of the sweet item */
   name?: string;
+  description?: string;
   /** The updated category of the sweet */
   category?: string;
   /** The updated price of the sweet item */
@@ -66,6 +69,46 @@ interface PaginatedResponse<T> {
 }
 
 export class SweetService {
+  // Backwards-compatible alias used by unit tests
+  async searchSweets(params: {
+    query?: string;
+    page?: number;
+    limit?: number;
+  }) {
+    const page = params.page || 1;
+    const limit = params.limit || 10;
+    const skip = (page - 1) * limit;
+
+    const where = params.query
+      ? {
+          OR: [
+            { name: { contains: params.query, mode: "insensitive" as const } },
+            {
+              category: {
+                contains: params.query,
+                mode: "insensitive" as const,
+              },
+            },
+          ],
+        }
+      : {};
+
+    const [items, total] = await Promise.all([
+      prisma.sweet.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { createdAt: "desc" },
+      }),
+      prisma.sweet.count({ where }),
+    ]);
+
+    return {
+      items,
+      meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    };
+  }
+
   async getSweetById(id: number) {
     return prisma.sweet.findUnique({ where: { id } });
   }
@@ -120,7 +163,7 @@ export class SweetService {
                   },
                 },
                 {
-                  description: {
+                  category: {
                     contains: params.search,
                     mode: "insensitive" as const,
                   },

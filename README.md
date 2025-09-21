@@ -1,141 +1,122 @@
 # Sweet Shop Management System
 
-A full-stack application for managing a sweet shop's inventory, orders, and user authentication. Built with TypeScript, React, Express, and Prisma.
+Full-stack sample for managing sweets, orders, users and admin reports. This repo contains a TypeScript + Express backend (Prisma + PostgreSQL) and a React + Vite frontend.
 
-## Features
+## Required versions
 
-- 🔐 Secure user authentication and authorization
-- 🍬 Sweet inventory management
-- 📊 Order tracking and management
-- 🎯 Role-based access control
-- 📱 Responsive frontend interface
-- 📚 API documentation with Swagger
+- Node.js: >= 18.x (recommended 18 or 20)
+- npm: >= 9.x
+- PostgreSQL: 12+
 
-## Tech Stack
+## Quick Start (development)
+
+The repository has two main folders: `backend/` and `frontend/`.
+
+1. Backend
+
+   - Move into backend and install:
+
+     ```powershell
+     cd backend; npm install
+     ```
+
+   - Copy environment file and set `DATABASE_URL` in `.env` (Postgres connection string):
+
+     ```powershell
+     copy .env.example .env
+     # then edit .env to set DATABASE_URL
+     ```
+
+   - Run Prisma migrations (development):
+
+     ```powershell
+     npx prisma migrate dev --name init
+     # or if you only want to apply already created migrations:
+     # npx prisma migrate deploy
+     ```
+
+   - Seed sample data (if seed script exists):
+
+     ```powershell
+     npm run seed
+     ```
+
+   - Start backend in watch mode:
+
+     ```powershell
+     npm run dev
+     ```
+
+   - Backend base URL: http://localhost:8000 (API root `http://localhost:8000/api`)
+
+2. Frontend
+
+   - Move into frontend and install:
+
+     ```powershell
+     cd frontend; npm install
+     ```
+
+   - Start the Vite dev server:
+
+     ```powershell
+     npm run dev
+     ```
+
+   - Frontend URL: http://localhost:8080
+
+Notes: the frontend expects the backend API at `http://localhost:8000/api`. If you change the backend port, update `frontend/src/api/config.ts`.
+
+## Order management (what's included)
+
+- Backend: Order and OrderItem models (Prisma), endpoints to create orders (`POST /api/orders`), list user orders (`GET /api/orders`), get order by id (`GET /api/orders/:id`), admin order listing (`GET /api/admin/orders`), update status (`PUT /api/admin/orders/:id/status`), and reporting (`/api/admin/stats`, `/api/admin/reports/top-products`, `/api/admin/reports/sales-by-day`).
+- Frontend: Checkout flow (collect delivery details), My Orders page (`/orders`), and Admin dashboard with basic order management UI.
+
+## Running tests and coverage
 
 ### Backend
 
-- Node.js with Express
-- TypeScript
-- Prisma ORM
-- PostgreSQL
-- JWT Authentication
-- Jest for testing
+- Run unit & integration tests (Jest):
+
+  ```powershell
+  cd backend
+  npm test
+  ```
+
+- Generate coverage report (HTML + text):
+
+  ```powershell
+  cd backend
+  npm run coverage
+  ```
+
+  Coverage artifacts will be under `backend/coverage/` (open `index.html` to view the report).
 
 ### Frontend
 
-- React with TypeScript
-- Vite
-- Modern CSS
-- React Router
+- Frontend has no automated test scripts by default in package.json. You can add React Testing Library tests and run them with Jest or Vitest. For now run lint and manual checks:
 
-## Setup Instructions
+  ```powershell
+  cd frontend
+  npm run dev
+  ```
 
-### Prerequisites
+## Useful commands (summary)
 
-- Node.js (v16 or higher)
-- PostgreSQL
-- npm or yarn
+- Backend dev: `cd backend; npm install; npm run dev`
+- Backend tests: `cd backend; npm test`
+- Backend coverage: `cd backend; npm run coverage`
+- Frontend dev: `cd frontend; npm install; npm run dev`
 
-### Backend Setup
+## Notes and caveats
 
-1. Navigate to the backend directory:
+- This repository includes fallback logic in the backend services to support running tests even when the Prisma migrations have not been applied (in-memory fallback orders). For production, make sure to run Prisma migrations and remove any in-memory fallbacks.
+- Make sure your `.env` contains a valid `DATABASE_URL` before running migrations or the dev server.
 
-   ```bash
-   cd backend
-   ```
+## Contributing
 
-2. Install dependencies:
+- Please open issues or PRs for changes. Add tests for any new backend behavior and run the coverage script.
 
-   ```bash
-   npm install
-   ```
+---
 
-3. Copy the example environment file and configure your variables:
 
-   ```bash
-   cp .env.example .env
-   ```
-
-4. Update the `.env` file with your database connection string and other configurations.
-
-5. Run database migrations:
-
-   ```bash
-   npx prisma migrate deploy
-   ```
-
-6. Start the development server:
-   ```bash
-   npm run dev
-   ```
-
-The backend will be available at `http://localhost:8000`
-
-### Frontend Setup
-
-1. Navigate to the frontend directory:
-
-   ```bash
-   cd frontend
-   ```
-
-2. Install dependencies:
-
-   ```bash
-   npm install
-   ```
-
-3. Start the development server:
-   ```bash
-   npm run dev
-   ```
-
-The frontend will be available at `http://localhost:5173`
-
-## API Documentation
-
-The API documentation is available through Swagger UI when the backend is running:
-
-- URL: `http://localhost:8000/api-docs`
-
-## Running Tests
-
-### Backend Tests
-
-```bash
-cd backend
-npm test
-```
-
-### Test coverage Report
-
-<img width="656" height="242" alt="image" src="https://github.com/user-attachments/assets/9e7c20f3-4b15-41ac-8809-dfc3c889c05c" />
-<img width="986" height="366" alt="image" src="https://github.com/user-attachments/assets/6f3ed271-4739-428b-90a6-6f4c97aa2574" />
-
-## Admin panel images
-
-`https://prnt.sc/PRU4nkVsxNoA`
-`https://prnt.sc/E9uOsQEhT55B`
-`https://prnt.sc/i5G8beAN-gSp`
-`https://prnt.sc/71Wz7DjtTTGi`
-`https://prnt.sc/c9eVJQj69h5L`
-
-## user pages images
-
-`https://prnt.sc/iWyPIHZeEIen`
-`https://prnt.sc/UrLwyx-_Di01`
-`https://prnt.sc/XKjlQM_z-rw_`
-`https://prnt.sc/TSFm_m-NvcKQ`
-`https://prnt.sc/fJw-_Sq1dApa`
-
-## Development Guidelines
-
-- Follow the established TypeScript configuration
-- Write tests for new features
-- Document new API endpoints using Swagger JSDoc
-- Follow the existing project structure
-
-## License
-
-This project is licensed under the MIT License.

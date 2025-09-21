@@ -1,5 +1,5 @@
-import React, { useCallback } from "react";
-import { Link } from "react-router-dom";
+import React, { useCallback, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { useAppSelector, useAppDispatch } from "@/hooks/redux";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,6 +10,17 @@ import {
 import { Minus, Plus, Trash } from "lucide-react";
 import { purchaseSweet } from "@/store/slices/productsSlice";
 import { addToast } from "@/store/slices/uiSlice";
+import { ordersApi } from "@/api/orders";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogFooter,
+  DialogTitle,
+  DialogDescription,
+  DialogTrigger,
+  DialogClose,
+} from "@/components/ui/dialog";
 
 const Cart: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -34,12 +45,61 @@ const Cart: React.FC = () => {
         await dispatch(purchaseSweet({ id, quantity: 1 })).unwrap();
         dispatch(addToast({ message: "Purchase successful", type: "success" }));
       } catch (err) {
-        dispatch(addToast({ message: "Purchase failed due to insufficient quantity", type: "error" }));
+        dispatch(
+          addToast({
+            message: "Purchase failed due to insufficient quantity",
+            type: "error",
+          })
+        );
       }
     },
     [dispatch]
   );
   const handleClear = () => dispatch(clearCart());
+
+  // Checkout dialog state
+  const [isCheckoutOpen, setCheckoutOpen] = useState(false);
+  const [recipientName, setRecipientName] = useState("");
+  const [deliveryAddress, setDeliveryAddress] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [notes, setNotes] = useState("");
+  const navigate = useNavigate();
+
+  const handleConfirmOrder = async () => {
+    if (!recipientName || !deliveryAddress || !phoneNumber) {
+      dispatch(
+        addToast({
+          message: "Please fill required delivery details.",
+          type: "error",
+        })
+      );
+      return;
+    }
+
+    try {
+      const payloadItems = items.map((it) => ({
+        productId: Number(it.id),
+        quantity: it.quantity,
+        price: it.price,
+      }));
+
+      await ordersApi.createOrder(payloadItems, {
+        recipientName,
+        deliveryAddress,
+        phoneNumber,
+        notes,
+      });
+
+      dispatch(clearCart());
+      setCheckoutOpen(false);
+      dispatch(
+        addToast({ message: "Order placed successfully", type: "success" })
+      );
+      navigate("/orders");
+    } catch (err) {
+      dispatch(addToast({ message: "Failed to place order", type: "error" }));
+    }
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -114,9 +174,61 @@ const Cart: React.FC = () => {
               <span className="font-medium">Calculated at checkout</span>
             </div>
 
-            <Button className="w-full mb-2" onClick={handlePurchase}>
-              Proceed to Checkout
-            </Button>
+            <Dialog open={isCheckoutOpen} onOpenChange={setCheckoutOpen}>
+              <DialogTrigger asChild>
+                <Button className="w-full mb-2">Proceed to Checkout</Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Checkout</DialogTitle>
+                  <DialogDescription>
+                    Enter delivery details to place your order.
+                  </DialogDescription>
+                </DialogHeader>
+
+                <div className="space-y-3 mt-2">
+                  <label className="block">
+                    <span className="text-sm">Recipient Name</span>
+                    <input
+                      value={recipientName}
+                      onChange={(e) => setRecipientName(e.target.value)}
+                      className="w-full mt-1 p-2 border rounded"
+                    />
+                  </label>
+                  <label className="block">
+                    <span className="text-sm">Delivery Address</span>
+                    <textarea
+                      value={deliveryAddress}
+                      onChange={(e) => setDeliveryAddress(e.target.value)}
+                      className="w-full mt-1 p-2 border rounded"
+                    />
+                  </label>
+                  <label className="block">
+                    <span className="text-sm">Phone Number</span>
+                    <input
+                      value={phoneNumber}
+                      onChange={(e) => setPhoneNumber(e.target.value)}
+                      className="w-full mt-1 p-2 border rounded"
+                    />
+                  </label>
+                  <label className="block">
+                    <span className="text-sm">Notes (optional)</span>
+                    <input
+                      value={notes}
+                      onChange={(e) => setNotes(e.target.value)}
+                      className="w-full mt-1 p-2 border rounded"
+                    />
+                  </label>
+                </div>
+
+                <DialogFooter>
+                  <Button onClick={handleConfirmOrder}>Place Order</Button>
+                  <DialogClose asChild>
+                    <Button variant="ghost">Cancel</Button>
+                  </DialogClose>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
             <Button variant="ghost" className="w-full" onClick={handleClear}>
               Clear Cart
             </Button>

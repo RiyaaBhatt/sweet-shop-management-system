@@ -19,6 +19,7 @@ model User {
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
   Transaction   Transaction[]
+  orders        Order[]
 }
 
 model Sweet {
@@ -35,6 +36,7 @@ model Sweet {
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
   Transaction Transaction[]
+  orderItems  OrderItem[]
 }
 
 model Transaction {
@@ -46,4 +48,29 @@ model Transaction {
   userId    Int?
   user      User?    @relation(fields: [userId], references: [id])
   createdAt DateTime @default(now())
+}
+
+model Order {
+  id         Int         @id @default(autoincrement())
+  userId     Int
+  user       User        @relation(fields: [userId], references: [id])
+  total      Float
+  status     String      @default("pending")
+  recipientName String?
+  deliveryAddress String?
+  phoneNumber  String?
+  notes        String?
+  items      OrderItem[]
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+}
+
+model OrderItem {
+  id        Int     @id @default(autoincrement())
+  orderId   Int
+  order     Order   @relation(fields: [orderId], references: [id])
+  productId Int
+  product   Sweet   @relation(fields: [productId], references: [id])
+  quantity  Int
+  price     Float   // price at order time
 }

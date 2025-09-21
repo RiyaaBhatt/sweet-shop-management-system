@@ -32,7 +32,7 @@ const initialState: ProductsState = {
   isDeleting: false,
   error: null,
   searchQuery: "",
-  selectedCategory: "All",
+  selectedCategory: "ALL",
   sortBy: "createdAt:desc",
   meta: null,
 };
@@ -153,9 +153,23 @@ const productsSlice = createSlice({
     setSortBy: (state, action: PayloadAction<string>) => {
       state.sortBy = action.payload;
     },
+    decrementStock: (
+      state,
+      action: PayloadAction<{ id: number | string; qty: number }>
+    ) => {
+      const idx = state.items.findIndex(
+        (i) => String(i.id) === String(action.payload.id)
+      );
+      if (idx !== -1) {
+        state.items[idx].stock = Math.max(
+          0,
+          state.items[idx].stock - action.payload.qty
+        );
+      }
+    },
     clearFilters: (state) => {
       state.searchQuery = "";
-      state.selectedCategory = "All";
+      state.selectedCategory = "ALL";
       state.sortBy = "createdAt:desc";
     },
   },
@@ -285,5 +299,7 @@ const productsSlice = createSlice({
 
 export const { setSearchQuery, setSelectedCategory, setSortBy, clearFilters } =
   productsSlice.actions;
+
+export const { decrementStock } = productsSlice.actions;
 
 export default productsSlice.reducer;
