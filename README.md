@@ -108,6 +108,13 @@ Notes: the frontend expects the backend API at `http://localhost:8000/api`. If y
 - Backend tests: `cd backend; npm test`
 - Backend coverage: `cd backend; npm run coverage`
 - Frontend dev: `cd frontend; npm install; npm run dev`
+## Tip on Using Multiple Accounts
+
+This application uses **localStorage** to store authentication tokens.  
+
+💡 **Tip:**  
+- To use both **admin** and **user** accounts at the same time, you can open one role in a regular tab and the other in an **Incognito/Private window**.  
+- This ensures a smooth experience without logging one out when switching roles.
 
 ## Notes and caveats
 
