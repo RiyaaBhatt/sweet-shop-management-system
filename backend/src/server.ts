@@ -5,9 +5,12 @@
  */
 
 import app from "./app";
+import dotenv from "dotenv";
 
+dotenv.config();
 const PORT = parseInt(process.env.PORT || "8000", 10);
 const HOST = process.env.HOST || "localhost";
+
 
 app.listen(PORT, HOST, () => {
   console.log(`Server running at http://${HOST}:${PORT}`);
