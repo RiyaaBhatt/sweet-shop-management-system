@@ -1,5 +1,11 @@
 # Sweet Shop Management System
 
+**Live Demo:** [https://sweet-shop-management-system-ecru.vercel.app/](https://sweet-shop-management-system-ecru.vercel.app/)
+
+**Admin Credentials:**  
+- Email: `admin@sweetshop.com`  
+- Password: `admin123`
+
 Full-stack sample for managing sweets, orders, users and admin reports. This repo contains a TypeScript + Express backend (Prisma + PostgreSQL) and a React + Vite frontend.
 
 ## Required versions
