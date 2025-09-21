@@ -1,8 +1,9 @@
 import axios from "axios";
-import dotenv from "dotenv";
-dotenv.config();
 
-const BASE_URL = process.env.VITE_APP_API_URL || "http://localhost:8000/api";
+
+
+const BASE_URL =
+  import.meta.env.VITE_APP_API_URL || "http://localhost:8000/api";
 
 export const api = axios.create({
   baseURL: BASE_URL,
