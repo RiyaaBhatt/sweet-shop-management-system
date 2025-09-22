@@ -18,6 +18,7 @@ import {
 } from "@/store/slices/uiSlice";
 import { logout } from "@/store/slices/authSlice";
 import { toggleCart } from "@/store/slices/cartSlice";
+import { authApi } from "@/api/auth";
 
 const Header: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -26,7 +27,10 @@ const Header: React.FC = () => {
   const { isAuthenticated, user } = useAppSelector((state) => state.auth);
   const { itemsCount } = useAppSelector((state) => state.cart);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await authApi.logout();
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
     dispatch(logout());
     navigate("/");
   };

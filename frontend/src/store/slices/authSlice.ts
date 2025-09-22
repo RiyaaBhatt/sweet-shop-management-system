@@ -137,8 +137,6 @@ const authSlice = createSlice({
       state.token = null;
       state.isAuthenticated = false;
       state.error = null;
-      localStorage.removeItem("token");
-      authApi.logout();
     },
     clearError: (state) => {
       state.error = null;
